@@ -80,6 +80,10 @@ def read_from_device(serial_object):
 
 # open a new file for writing. If file name already exists, append a number
 def open_file(filename, add_header = False):
+    
+    # if the "data" directory doesn't exist, create it
+    if (not os.path.exists(SAVE_DIR)): os.makedirs(SAVE_DIR)
+    
     f = None
     # open a file to write response into
     file_suffix = 0

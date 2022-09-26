@@ -132,7 +132,7 @@ String take_measurement(bool manual_measurement = false) {
     } else if (validation_res == -1) {
       // too dark
       
-      if (s_dark_readings >= MAX_DARK_READINGS) {
+      if (ENABLE_NIGHTMODE && s_dark_readings >= MAX_DARK_READINGS) {
         // too many dark readings in a series, accept this reading as-is
         too_dark = true;
         break;
