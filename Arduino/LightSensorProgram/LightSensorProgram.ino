@@ -78,7 +78,7 @@ bool ae = true; // use autoexposure?
 unsigned int data_counter = 0; // how many data points collected and stored
 int s_dark_readings = 0; // how many sequential dark readings?
 
-char ser_buffer[16]; // the serial buffer
+char ser_buffer[32]; // the serial buffer
 int read_index = 0; // the serial buffer read index
 
 // OBJECTS
