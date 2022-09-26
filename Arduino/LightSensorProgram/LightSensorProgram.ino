@@ -526,7 +526,7 @@ void loop() {
       } else if (ser_buffer[0] == '1' && ser_buffer[1] == '1') {
         // 11: Set calibration factor
         String s_buf = String(ser_buffer);
-        int new_calibration_factor = s_buf.substring(s_buf.indexOf("_") + 1).toFloat();
+        double new_calibration_factor = s_buf.substring(s_buf.indexOf("_") + 1).toFloat();
         calibration_factor = new_calibration_factor;
         update_memory();
         Serial.println("OK");
