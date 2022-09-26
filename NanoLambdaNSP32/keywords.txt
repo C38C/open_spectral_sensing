@@ -1,0 +1,63 @@
+#######################################
+# Syntax Coloring Map For NanoLambdaNSP32
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+IMcuAdaptor	KEYWORD1
+ArduinoAdaptor	KEYWORD1
+NSP32	KEYWORD1
+CmdCodeEnum	KEYWORD1
+DataChannelEnum	KEYWORD1
+UartBaudRateEnum	KEYWORD1
+WavelengthInfo	KEYWORD1
+SpectrumInfo	KEYWORD1
+XYZInfo	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+Init	KEYWORD2
+IsActive	KEYWORD2
+Wakeup	KEYWORD2
+Hello	KEYWORD2
+Standby	KEYWORD2
+GetSensorId	KEYWORD2
+GetWavelength	KEYWORD2
+AcqSpectrum	KEYWORD2
+AcqXYZ	KEYWORD2
+OnPinReadyTriggered	KEYWORD2
+UpdateStatus	KEYWORD2
+FwdCmdByte	KEYWORD2
+ClearReturnPacket	KEYWORD2
+GetReturnPacketSize	KEYWORD2
+GetReturnPacketPtr	KEYWORD2
+ExtractSensorIdStr	KEYWORD2
+ExtractWavelengthInfo	KEYWORD2
+ExtractSpectrumInfo	KEYWORD2
+ExtractXYZInfo	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+CodeUnknown	LITERAL1
+CodePrefix0	LITERAL1
+CodePrefix1	LITERAL1
+CodeHello	LITERAL1
+CodeStandby	LITERAL1
+CodeGetSensorId	LITERAL1
+CodeGetWavelength	LITERAL1
+CodeAcqSpectrum	LITERAL1
+CodeGetSpectrum	LITERAL1
+CodeAcqXYZ	LITERAL1
+CodeGetXYZ	LITERAL1
+ChannelSpi	LITERAL1
+ChannelUart	LITERAL1
+BaudRate9600	LITERAL1
+BaudRate19200	LITERAL1
+BaudRate38400	LITERAL1
+BaudRate115200	LITERAL1
