@@ -25,7 +25,7 @@ MIN_LOGGING_INTERVAL = 10000                # the minimum logging interval
 
 # serial
 s = None                                    # the currently selected serial device
-instruction = ""                            # the serial instruction to send to device
+command_to_send = ""                            # the serial instruction to send to device
 
 # FIILE IO
 SAVE_DIR = "./data/"                        # directory for saving files
@@ -35,7 +35,7 @@ FILE_EXT = ".CSV"                           # file extension
 inp = ""
 
 # Instructions that the OSS device understands
-instructions = {
+commands = {
     "TOGGLE_DATA_CAPTURE": "00",
     "MANUAL_CAPTURE": "01",
     "EXPORT_ALL": "02",
@@ -86,9 +86,9 @@ def open_file(filename, add_header = False):
     
     f = None
     # open a file to write response into
-    file_suffix = 0
+    file_suffix = -1
     while True:
-        save_filename = SAVE_DIR + str(filename) + str(file_suffix) + FILE_EXT
+        save_filename = SAVE_DIR + str(filename) + (str(file_suffix) if file_suffix > -1 else "") + FILE_EXT
         if exists(save_filename):
             file_suffix += 1
         else:
@@ -118,7 +118,7 @@ def say_hello(port, response, ind):
     
 def update_device_status(s):
     try:
-        s.write(bytes(instructions["_SAY_HELLO"] + '\n', 'utf-8'))
+        s.write(bytes(commands["_SAY_HELLO"] + '\n', 'utf-8'))
         time.sleep(0.1)
         
         res = s.readline().decode().strip()
@@ -245,8 +245,8 @@ if __name__ == "__main__":
         
         # device selected, set time
         date = get_formatted_date()
-        instruction = instructions["_SET_DATETIME"] + date
-        write_to_device(instruction, s)
+        command_to_send = commands["_SET_DATETIME"] + date
+        write_to_device(command_to_send, s)
         resp = read_from_device(s)
         
         if len(resp) <= 0 or resp[0].lower() != "ok":
@@ -279,11 +279,11 @@ if __name__ == "__main__":
             print("---")
             
             # filter hidden instructions
-            public_instructions = {}
-            for (key, value) in instructions.items():
-                if (key[0] != '_'): public_instructions[key] = value
+            public_commands = {}
+            for (key, value) in commands.items():
+                if (key[0] != '_'): public_commands[key] = value
             
-            for i, key in enumerate(public_instructions.keys()):
+            for i, key in enumerate(public_commands.keys()):
                 if (key == "TOGGLE_DATA_CAPTURE"):
                     print("[" + str(i) + "] " + ("STOP_RECORDING" if d["device_status"] == "1" else "START_RECORDING"))
                 elif (key == "EXPORT_ALL"): 
@@ -292,28 +292,28 @@ if __name__ == "__main__":
                     print("[" + str(i) + "] " + key)
                     
             for i, key in enumerate(local_functions):
-                print("[" + str(i + len(public_instructions.keys())) + "] " + key)                
+                print("[" + str(i + len(public_commands.keys())) + "] " + key)                
                 
             inp = input("Choose a command by entering the number in front\n>")
             
-            if (not inp.strip().isnumeric() or int(inp) < 0 or int(inp) >= (len(public_instructions.keys()) +
+            if (not inp.strip().isnumeric() or int(inp) < 0 or int(inp) >= (len(public_commands.keys()) +
                                                                             len(local_functions))):
                 response = "Invalid entry. Please try again."
                 continue
             
             inp = int(inp)
             
-            if (inp >= len(public_instructions.keys())):
+            if (inp >= len(public_commands.keys())):
                 # local function chosen
-                inp = inp - len(public_instructions.keys())
-                cmd = local_functions[inp]
+                inp = inp - len(public_commands.keys())
+                selected_command = local_functions[inp]
                 
-                if (cmd == "DISCONNECT"):
+                if (selected_command == "DISCONNECT"):
                     s.close()
                     cls()
                     print("Goodbye!")
                     exit()                     
-                elif (cmd == "SETUP"):
+                elif (selected_command == "SETUP"):
 
                     device_name = ""
 
@@ -323,7 +323,7 @@ if __name__ == "__main__":
                             print("Invalid name")
                             continue
                             
-                elif (cmd == "REFRESH"):
+                elif (selected_command == "REFRESH"):
                     trigger_update = True
                     response = "Refreshed."
                     continue
@@ -331,22 +331,27 @@ if __name__ == "__main__":
                 break
 
             # find the right command to send
-            cmd = list(public_instructions.keys())[inp]
-            instruction = ""
+            selected_command = list(public_commands.keys())[inp]
+            command_to_send = ""
             
-            if (cmd == "TOGGLE_DATA_CAPTURE"):
-                instruction = instructions["TOGGLE_DATA_CAPTURE"]
-                write_to_device(instruction, s)
-                response = read_from_device(s)
+            if (selected_command == "TOGGLE_DATA_CAPTURE"):
+                command_to_send = commands["TOGGLE_DATA_CAPTURE"]
+                write_to_device(command_to_send, s)
+                
+                # no need to save the response
+                read_from_device(s)    
+                response = ""
                 
                 trigger_update = True
                 
-            elif (cmd == "MANUAL_CAPTURE"):
+            elif (selected_command == "MANUAL_CAPTURE"):
                 save_file = False
+                user_filename = ""
                 do_graph = False
                 
                 while True:
-                    inp = input("Do you want to save the result? y or n or cancel\n>").strip()
+                    # ask if datapoint should be saved to file
+                    inp = input("Do you want to save the result on this computer? y or n or cancel\n>").strip()
                     if inp.lower() == "cancel" or inp.lower() == "exit":
                         response = "Command cancelled. Datapoint not captured."
                         break
@@ -357,6 +362,18 @@ if __name__ == "__main__":
                     else:
                         continue
                     
+                    # ask for filename
+                    if (save_file):
+                        inp = input("Enter a file name or hit enter for automatic filename.\n>").strip()
+                        if inp.lower() == "cancel" or inp.lower() == "exit":
+                            response = "Command cancelled. Datapoint not captured."
+                            break
+                        if (len(inp) == 0):
+                            user_filename = "MANUAL_" + get_formatted_date()
+                        else:
+                            user_filename = inp
+                    
+                    # ask if datapoint should be graphed
                     inp = input("Do you want to graph the result? y or n or cancel\n>").strip()
                     if inp.lower() == "cancel" or inp.lower() == "exit":
                         response = "Command cancelled. Datapoint not captured."
@@ -369,14 +386,14 @@ if __name__ == "__main__":
                     else:
                         continue
                         
-                    instruction = instructions["MANUAL_CAPTURE"]
-                    write_to_device(instruction, s)
+                    command_to_send = commands["MANUAL_CAPTURE"]
+                    write_to_device(command_to_send, s)
                     response = read_from_device(s)
                     
                     trigger_update = True
                     
                     if (save_file):
-                        f, file_name = open_file("MANUAL_" + get_formatted_date())
+                        f, filename = open_file(user_filename)
                         f.write(file_header())
                         f.write(response[1] + "\n")
                         f.close()
@@ -397,10 +414,10 @@ if __name__ == "__main__":
                         
                     break
                     
-            elif (cmd == "EXPORT_ALL"):
-                f, file_name = open_file(get_formatted_date())
-                instruction = instructions["EXPORT_ALL"]
-                write_to_device(instruction, s)
+            elif (selected_command == "EXPORT_ALL"):
+                f, filename = open_file(get_formatted_date())
+                command_to_send = commands["EXPORT_ALL"]
+                write_to_device(command_to_send, s)
 
                 while (True):
                     line = s.readline().decode().strip()
@@ -415,15 +432,20 @@ if __name__ == "__main__":
                     f.write(line + "\n")                
                 # close the file    
                 f.close()
-                response = "File saved as " + file_name
+                response = "File saved as " + filename
                 
-            elif (cmd == "RESET_DEVICE"):
-                instruction = instructions["RESET_DEVICE"]
-                write_to_device(instruction, s)
+            elif (selected_command == "RESET_DEVICE"):
+                command_to_send = commands["RESET_DEVICE"]
+                write_to_device(command_to_send, s)
                 response = read_from_device(s)
+                if (response[0].lower() == "ok"):
+                    response = "Device successfully reset to factory settings."
+                else:
+                    response = "Device could not be reset. Please try again."
+                    
                 trigger_update = True
                 
-            elif (cmd == "SET_COLLECTION_INTERVAL"):
+            elif (selected_command == "SET_COLLECTION_INTERVAL"):
                 while True:
                     inp = input("Enter the interval in ms\n>").strip()
                     if inp.lower() == "cancel" or inp.lower() == "exit":
@@ -437,14 +459,14 @@ if __name__ == "__main__":
                         print("Enter a value greater than " + str(MIN_LOGGING_INTERVAL))
                         continue
                     
-                    instruction = instructions["SET_COLLECTION_INTERVAL"] + "_" + inp.strip()
-                    write_to_device(instruction, s)
+                    command_to_send = commands["SET_COLLECTION_INTERVAL"] + "_" + inp.strip()
+                    write_to_device(command_to_send, s)
                     response = read_from_device(s)
 
                     break
                 trigger_update = True                    
                 
-            elif (cmd == "SET_DEVICE_NAME"):
+            elif (selected_command == "SET_DEVICE_NAME"):
                 while True:
                     inp = input("Enter the device name\n>").strip()
                     if (inp.lower() == "cancel" or inp.lower() == "exit"):
@@ -456,8 +478,8 @@ if __name__ == "__main__":
                         continue
                     
                     inp = inp.replace(' ', '_')
-                    instruction = instructions["SET_DEVICE_NAME"] + "_" + inp
-                    write_to_device(instruction, s)
+                    command_to_send = commands["SET_DEVICE_NAME"] + "_" + inp
+                    write_to_device(command_to_send, s)
                     response = read_from_device(s)
                     
                     # update local variables
@@ -467,12 +489,12 @@ if __name__ == "__main__":
                 
                 trigger_update = True
                 
-            elif (cmd == "GET_INFO"):
-                instruction = instructions["GET_INFO"]
-                write_to_device(instruction, s)
+            elif (selected_command == "GET_INFO"):
+                command_to_send = commands["GET_INFO"]
+                write_to_device(command_to_send, s)
                 response = read_from_device(s)
                 
-            elif (cmd == "SET_CALIBRATION_FACTOR"):
+            elif (selected_command == "SET_CALIBRATION_FACTOR"):
                 while True:
                     inp = input("Enter new sensor calibration factor\n>").strip()
                     if (inp.lower() == "cancel" or inp.lower() == "exit"):
@@ -483,8 +505,8 @@ if __name__ == "__main__":
                         print("Enter a numeric value")
                         continue
                     
-                    instruction = instructions["SET_CALIBRATION_FACTOR"] + "_" + inp
-                    write_to_device(instruction, s)
+                    command_to_send = commands["SET_CALIBRATION_FACTOR"] + "_" + inp
+                    write_to_device(command_to_send, s)
                     response = read_from_device(s)
                     
                     break
