@@ -39,7 +39,7 @@ instructions = {
     "TOGGLE_DATA_CAPTURE": "00",
     "MANUAL_CAPTURE": "01",
     "EXPORT_ALL": "02",
-    "DELETE_ALL": "03",
+    "RESET_DEVICE": "03",
     "SET_COLLECTION_INTERVAL": "04",
     "_SET_DATETIME": "05",
     "_SAY_HELLO": "07",
@@ -278,9 +278,12 @@ if __name__ == "__main__":
                   ". Recording interval is set to " + str(d["logging_interval"]))
             print("---")
             
+            # filter hidden instructions
+            public_instructions = {}
+            for (key, value) in instructions.items():
+                if (key[0] != '_'): public_instructions[key] = value
             
-            
-            for i, key in enumerate(instructions.keys()):
+            for i, key in enumerate(public_instructions.keys()):
                 if (key == "TOGGLE_DATA_CAPTURE"):
                     print("[" + str(i) + "] " + ("STOP_RECORDING" if d["device_status"] == "1" else "START_RECORDING"))
                 elif (key == "EXPORT_ALL"): 
@@ -289,28 +292,30 @@ if __name__ == "__main__":
                     print("[" + str(i) + "] " + key)
                     
             for i, key in enumerate(local_functions):
-                print("[" + str(i + len(instructions.keys())) + "] " + key)                
+                print("[" + str(i + len(public_instructions.keys())) + "] " + key)                
                 
             inp = input("Choose a command by entering the number in front\n>")
             
-            if (not inp.strip().isnumeric() or int(inp) < 0 or int(inp) >= (len(instructions.keys()) +
+            if (not inp.strip().isnumeric() or int(inp) < 0 or int(inp) >= (len(public_instructions.keys()) +
                                                                             len(local_functions))):
                 response = "Invalid entry. Please try again."
                 continue
             
             inp = int(inp)
             
-            if (inp >= len(instructions.keys())):
+            if (inp >= len(public_instructions.keys())):
                 # local function chosen
-                inp = inp - len(instructions.keys())
+                inp = inp - len(public_instructions.keys())
                 cmd = local_functions[inp]
                 
                 if (cmd == "DISCONNECT"):
-                    s.close()                        
+                    s.close()
+                    cls()
+                    print("Goodbye!")
+                    exit()                     
                 elif (cmd == "SETUP"):
 
                     device_name = ""
-
 
                     while True:
                         inp = input("Set a device name? (NSP)\n>").strip()
@@ -326,7 +331,7 @@ if __name__ == "__main__":
                 break
 
             # find the right command to send
-            cmd = list(instructions.keys())[inp]
+            cmd = list(public_instructions.keys())[inp]
             instruction = ""
             
             if (cmd == "TOGGLE_DATA_CAPTURE"):
@@ -412,8 +417,8 @@ if __name__ == "__main__":
                 f.close()
                 response = "File saved as " + file_name
                 
-            elif (cmd == "DELETE_ALL"):
-                instruction = instructions["DELETE_ALL"]
+            elif (cmd == "RESET_DEVICE"):
+                instruction = instructions["RESET_DEVICE"]
                 write_to_device(instruction, s)
                 response = read_from_device(s)
                 trigger_update = True
@@ -486,7 +491,6 @@ if __name__ == "__main__":
                     
 
             else:
-                instruction = instructions[cmd]
                 response = "UNKNOWN COMMAND NOT SENT"
         
 
