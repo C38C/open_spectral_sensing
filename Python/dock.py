@@ -285,23 +285,23 @@ if __name__ == "__main__":
             
             for i, key in enumerate(public_commands.keys()):
                 if (key == "TOGGLE_DATA_CAPTURE"):
-                    print("[" + str(i) + "] " + ("STOP_RECORDING" if d["device_status"] == "1" else "START_RECORDING"))
+                    print("[" + str(i + 1) + "] " + ("STOP_RECORDING" if d["device_status"] == "1" else "START_RECORDING"))
                 elif (key == "EXPORT_ALL"): 
-                    print("[" + str(i) + "] " + key + " (" + str(d["data_counter"]) + " entries)")
+                    print("[" + str(i + 1) + "] " + key + " (" + str(d["data_counter"]) + " entries)")
                 else:
-                    print("[" + str(i) + "] " + key)
+                    print("[" + str(i + 1) + "] " + key)
                     
             for i, key in enumerate(local_functions):
-                print("[" + str(i + len(public_commands.keys())) + "] " + key)                
+                print("[" + str(i + len(public_commands.keys()) + 1) + "] " + key)                
                 
             inp = input("Choose a command by entering the number in front\n>")
             
-            if (not inp.strip().isnumeric() or int(inp) < 0 or int(inp) >= (len(public_commands.keys()) +
+            if (not inp.strip().isnumeric() or (int(inp) - 1) < 0 or (int(inp) - 1) >= (len(public_commands.keys()) +
                                                                             len(local_functions))):
                 response = "Invalid entry. Please try again."
                 continue
             
-            inp = int(inp)
+            inp = int(inp) - 1
             
             if (inp >= len(public_commands.keys())):
                 # local function chosen
@@ -322,6 +322,10 @@ if __name__ == "__main__":
                         if (len(inp) == 0):
                             print("Invalid name")
                             continue
+                        device_name = inp
+                        
+                        inp = input("Use auto-exposure? y or n\n>").strip()
+                        
                             
                 elif (selected_command == "REFRESH"):
                     trigger_update = True
