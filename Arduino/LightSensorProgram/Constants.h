@@ -9,7 +9,7 @@
 
 // SERIAL COMMUNICATIONS
 #define DEV_NAME_PREFIX "NSP" // the device name prefix
-#define BAUDRATE 115200 // the device baudrate for serial communication
+#define BAUDRATE 921600 // the device baudrate for serial communication
 
 // DEVICE SETTINGS
 #define DEF_CAPTURE_INTERVAL 60000 // how frequently to capture data in ms

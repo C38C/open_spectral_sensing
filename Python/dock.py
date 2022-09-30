@@ -2,6 +2,7 @@
 Command-line tool suite for Open Spectral Sensing (OSS) device.
 '''
 
+from gc import collect
 import serial
 import serial.tools.list_ports
 import time
@@ -47,11 +48,14 @@ commands = {
     "GET_INFO": "09",
     "_NSP_SETTINGS": "10",
     "SET_CALIBRATION_FACTOR": "11",
+    "_START_RECORDING": "12",
+    "_STOP_RECORDING": "13",
+    "_DELETE_STORAGE": "14",
 }
 
 local_functions = [
     "DISCONNECT",
-    "SETUP",
+    "CONFIGURE_NSP",
     "REFRESH",
 ]
 
@@ -79,7 +83,7 @@ def read_from_device(serial_object):
     return response
 
 # open a new file for writing. If file name already exists, append a number
-def open_file(filename, add_header = False):
+def open_file(filename, add_header = False, byte_file = False):
     
     # if the "data" directory doesn't exist, create it
     if (not os.path.exists(SAVE_DIR)): os.makedirs(SAVE_DIR)
@@ -92,7 +96,7 @@ def open_file(filename, add_header = False):
         if exists(save_filename):
             file_suffix += 1
         else:
-            f = open(save_filename, 'w')
+            f = open(save_filename, "wb" if byte_file else "w")
             break
         
     # add the file header
@@ -313,19 +317,140 @@ if __name__ == "__main__":
                     cls()
                     print("Goodbye!")
                     exit()                     
-                elif (selected_command == "SETUP"):
+                elif (selected_command == "CONFIGURE_NSP"):
 
                     device_name = ""
+                    use_ae = True
+                    frame_avg = 3
+                    int_time = 500
+                    collection_freq = 0
+                    start_recording = False              
 
                     while True:
+                        # get the device name
                         inp = input("Set a device name? (NSP)\n>").strip()
+                        if inp.lower() == "cancel" or inp.lower() == "exit":
+                            response = "Command cancelled. Datapoint not captured."
+                            break
+                        
                         if (len(inp) == 0):
-                            print("Invalid name")
-                            continue
-                        device_name = inp
+                            device_name = ""
+                        else:
+                            device_name = inp
+                            
+                        cls()
+                        # Use auto-exposure?
+                        inp = input("Use auto-exposure? (y) or n\n>").strip()
+                        if inp.lower() == "cancel" or inp.lower() == "exit":
+                            response = "Command cancelled. Datapoint not captured."
+                            break
                         
-                        inp = input("Use auto-exposure? y or n\n>").strip()
+                        if (len(inp) == 0 or inp.lower() == 'y'):
+                            use_ae = True
+                            cancel = False
+                            
+                            # ask for custom integration time if auto-exposure not selected
+                            if (not use_ae):
+                                while True:                            
+                                    inp = input("Enter a custom integration time between 1 and 1000 (500)\n>").strip()
+                                    if inp.lower() == "cancel" or inp.lower() == "exit":
+                                        response = "Command cancelled. Datapoint not captured."
+                                        cancel = True
+                                        break
+                                    
+                                    if (len(inp) == 0):
+                                        int_time = 500
+                                    else:
+                                        inp = int(inp)
+                                        if (inp < 1 or inp > 1000):
+                                            print("Enter a valid integration time between 1 and 1000")
+                                            continue
+                                        
+                                        int_time = inp
+                                        break
+                                
+                                if cancel: break
+                            
+                        else:
+                            use_ae = False
+                            
+                        cls()
+                        # how mnay frames to average into a single reading?
+                        inp = input("How many frames to average? (3)\n>").strip()
+                        if inp.lower() == "cancel" or inp.lower() == "exit":
+                            response = "Command cancelled. Datapoint not captured."
+                            break
                         
+                        if (len(inp) == 0):
+                            frame_avg = 3
+                        else:
+                            
+                            if (not inp.isnumeric()):
+                                print("Enter a valid integer.")
+                                continue
+                            
+                            inp = int(inp)
+       
+                            if (inp < 1 or inp > 10):
+                                print("Choose a number between [1, 10].")
+                                continue
+                            
+                            frame_avg = inp
+                        
+                        cls()
+                        # what is the collection frequency?
+                        inp = input("What is the collection frequency in ms? (60000 or 1 minute)\n>").strip()
+                        if inp.lower() == "cancel" or inp.lower() == "exit":
+                            response = "Command cancelled. Datapoint not captured."
+                            break
+                        
+                        if (len(inp) == 0):
+                            collection_freq = 60000
+                        else:
+                            
+                            if (not inp.isnumeric()):
+                                print("Enter a numeric value greater than " + str(MIN_LOGGING_INTERVAL))
+                                continue
+                            elif (int(inp) < MIN_LOGGING_INTERVAL):
+                                print("Enter a value greater than " + str(MIN_LOGGING_INTERVAL))
+                                continue
+                            
+                            collection_freq = int(inp)
+                            
+                        # start recording ?
+                        inp = input("Start recording data? y or (n)\n>").strip()
+                        if inp.lower() == "cancel" or inp.lower() == "exit":
+                            response = "Command cancelled. Datapoint not captured."
+                            break
+                        
+                        if (len(inp) == 0 or inp.lower() == 'n'):
+                            start_recording = False
+                        else:
+                            start_recording = True
+                        
+                        break
+                        
+                    # write name
+                    write_to_device(commands["SET_DEVICE_NAME"] + "_" + device_name, s)
+                    read_from_device(s)
+                    
+                    # write the settings
+                    write_to_device(commands["_NSP_SETTINGS"] + str(int(use_ae)) + str(frame_avg).zfill(3) + str(int_time).zfill(4), s)
+                    read_from_device(s)
+                    
+                    # set collection frequency
+                    write_to_device(commands["SET_COLLECTION_INTERVAL"] + "_" + str(collection_freq), s)
+                    read_from_device(s)
+                    
+                    # start recording or stop depending
+                    if (start_recording):
+                        write_to_device(commands["_START_RECORDING"], s)
+                        read_from_device(s)
+                    else:
+                        write_to_device(commands["_STOP_RECORDING"], s)
+                        read_from_device(s)
+                        
+                    response = "Device configured."
                             
                 elif (selected_command == "REFRESH"):
                     trigger_update = True
@@ -403,7 +528,6 @@ if __name__ == "__main__":
                         f.close()
                     
                     if (do_graph):
-                        print(response)
                         x, y, timestamp, manual, int_time, frame_avg, ae, is_saturated, is_dark, cie_x, cie_y, cie_z  = get_formatted_datapoint(response[1])
                         plt.plot(x,y)
                         plt.xlim([MIN_WAVELENGTH, MAX_WAVELENGTH])
@@ -416,27 +540,52 @@ if __name__ == "__main__":
                         mpc.cursor(hover=True)
                         plt.show()
                         
+                    response = "Manual datapoint captured."
+                    
                     break
                     
             elif (selected_command == "EXPORT_ALL"):
-                f, filename = open_file(get_formatted_date())
+                
+                delete_data = False
+                
+                inp = input("Delete datapoints from device storage after exporting? (y) or n?\n>").strip()
+                if inp.lower() == "cancel" or inp.lower() == "exit":
+                    response = "Command cancelled. Data not exported."
+                    break
+                
+                if (len(inp) == 0 or inp.lower() == 'y'):
+                    delete_data = True
+                
+                f, filename = open_file(get_formatted_date(), byte_file = True)
                 command_to_send = commands["EXPORT_ALL"]
                 write_to_device(command_to_send, s)
+                
+                # read the "DATA" header
+                h_data = s.readline().decode().strip()
+                
+                if (h_data.lower() != "data"):
+                    response = "Could not export data. Please try again."
+                    break
 
-                while (True):
-                    line = s.readline().decode().strip()
-                    
-                    if (line.lower() == "data"):
-                        continue
-                    
-                    if (line.lower() == "ok"):
-                        break
-                    
-                    # append the line to file
-                    f.write(line + "\n")                
+                while True:
+                    if s.in_waiting > 0:
+                        b = s.read(s.in_waiting)
+                        
+                        if (b == b'OK'):
+                            break
+                        
+                        f.write(b)
+
                 # close the file    
                 f.close()
                 response = "File saved as " + filename
+                
+                if delete_data:
+                    trigger_update = True
+                    write_to_device(commands["_DELETE_STORAGE"], s)
+                    res = read_from_device(s)
+                    if res[0].lower() != "OK":
+                        response += " File could not be deleted from device storage."
                 
             elif (selected_command == "RESET_DEVICE"):
                 command_to_send = commands["RESET_DEVICE"]

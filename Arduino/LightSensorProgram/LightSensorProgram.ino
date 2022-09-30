@@ -69,7 +69,7 @@ const unsigned int PinReady = NSP_READY; // pin Ready
 int logging_interval = DEF_CAPTURE_INTERVAL; // the data logging interval
 unsigned long last_collection_time = 0; // remember the last collection interval
 unsigned long time_offset = 0; // how much time to offset by if device hung for long operations
-bool recording = false; // is data capture paused?
+bool recording = false; // is data capture recording?
 String device_name = DEV_NAME_PREFIX; // the device name for easier identification
 double calibration_factor = DEF_CALIBRATION_FACTOR; // the calibration factor
 int int_time = 500; // default integration time for sensor           
@@ -427,27 +427,35 @@ void loop() {
         Serial.println("OK");
 
       } else if (ser_buffer[0] == '0' && ser_buffer[1] == '2') {
-        // 02: export all data line by line
+        // 02: stream entire log file (export)
 
         // pause recording because this is a lengthy command
-        pause(true);
+        bool was_recording = recording;
+        if (was_recording) pause(true);
 
         Serial.println("DATA");
 
-        st.open_file();
-
-        for (int i = 0; i < data_counter + 1; i++) {
-          String line = st.read_line(i, MAX_LINE_LENGTH);
-          Serial.println(line);
+        if (st.open_file()) {
+          st.seek_to_start();
+          while (st.file_available()) {
+            byte b = st.read_byte();
+            Serial.write(b);
+          }
+        } else {
+          Serial.println("ERR");
         }
-
-        pause(false);
-
-        Serial.println("OK");
-
+        
+        if (was_recording) pause(false);
+        
         st.close_file();
+        
+        Serial.flush();
+        // do not send \r\n when streaming
+        Serial.write("OK");
+
+        
       } else if (ser_buffer[0] == '0' && ser_buffer[1] == '3') {
-        // 03: Delete the data logging file
+        // 03: Reset the device
         st.delete_file();
 
         device_name = DEV_NAME_PREFIX;
@@ -515,11 +523,11 @@ void loop() {
 
       } else if (ser_buffer[0] == '1' && ser_buffer[1] == '0') {
         // 10: Set NSP settings
-        // they are sent like this: 10[ae:1 or 0][frame_avg:1 to 999][int_time:1 to 1000]
+        // they are sent like this: 10[ae:1 or 0][frame_avg:1 to 9999][int_time:1 to 1000]
         String s_buf = String(ser_buffer);
         ae = (bool) s_buf.substring(2, 3).toInt();
         frame_avg = s_buf.substring(3, 6).toInt();
-        int_time = s_buf.substring(6, 10).toInt();
+        int_time = s_buf.substring(6).toInt();
 
         Serial.println("OK");
 
@@ -530,7 +538,24 @@ void loop() {
         calibration_factor = new_calibration_factor;
         update_memory();
         Serial.println("OK");
-
+        
+      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '2') {
+        // 12: Start recording
+        pause(false);
+        Serial.println("OK");
+        
+      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '3') {
+        // 12: Stop recording
+        pause(true);
+        Serial.println("OK");
+        
+      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '4') { 
+        // 14: Delete storage only
+        st.delete_file();
+        data_counter = 0;
+        update_memory();
+        Serial.println("OK");
+        
       } else {
         Serial.println("Err '" + String(ser_buffer) + "'");
       }

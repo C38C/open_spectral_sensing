@@ -99,6 +99,18 @@ String Storage::get_line(unsigned int line) {
   return line_to_ret;
 }
 
+bool Storage::file_available() {
+  return log_file.available();
+}
+
+void Storage::seek_to_start() {
+  log_file.seek(0);
+}
+
+byte Storage::read_byte() {
+  return log_file.read();
+}
+
 /* Return a new line every time this function is called.
  *  The line variable is only to set the point to read from.
  */

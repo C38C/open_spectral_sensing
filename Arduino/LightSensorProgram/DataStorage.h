@@ -34,6 +34,11 @@ class Storage {
   /* Read a line given line number from the SD file */
   String get_line(unsigned int line);
 
+  bool file_available();
+  void seek_to_start();
+
+  byte read_byte();
+
   /* Read a line and move onto the next. Consecutively calling this function returns all lines in file. */
   String read_line(unsigned int line, unsigned int buf_size);
 };
