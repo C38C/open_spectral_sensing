@@ -2,6 +2,9 @@
 Command-line tool suite for Open Spectral Sensing (OSS) device.
 '''
 
+# TODO: Sync feature copies datapoints into a special file and only transfers new data
+# TODO: progress bar for file transfer
+
 from gc import collect
 import serial
 import serial.tools.list_ports
