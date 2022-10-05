@@ -408,7 +408,7 @@ void loop() {
     if (end_of_line) {
 
       if (ser_buffer[0] == '0' && ser_buffer[1] == '0') {
-        // 00: Toggle data capture while plugged in
+        // 00: Toggle data capture while plugged in (DEPRECIATED)
         // TODO implement
         if (recording) {
           pause(true);
