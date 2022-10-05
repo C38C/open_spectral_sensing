@@ -106,6 +106,21 @@ def open_file(filename, add_header = False, byte_file = False):
     if (add_header): f.write(file_header())
     return f, save_filename
 
+# Create a folder if not exists, otherwise create a new folder with unique numeral suffix
+def open_folder(foldername):   
+    folder_suffix = -1
+    new_foldername = ""
+    while True:
+        new_foldername = foldername + (str(folder_suffix) if folder_suffix > -1 else "")
+        if (os.path.exists(new_foldername)):
+            folder_suffix += 1
+        else:
+            os.makedirs(new_foldername)
+            break
+    return new_foldername
+        
+    
+
 # produce the file header
 def file_header():
     line = "DATE,TIME,MANUAL,INT_TIME,FRAME_AVG,AE,IS_SATURATED,IS_DARK,X,Y,Z,"
@@ -459,7 +474,7 @@ if __name__ == "__main__":
                     trigger_update = True
                     response = "Refreshed."
                     continue
-                
+             
                 break
 
             # find the right command to send
