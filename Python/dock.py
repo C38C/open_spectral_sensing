@@ -2,8 +2,11 @@
 Command-line tool suite for Open Spectral Sensing (OSS) device.
 '''
 
-# TODO: Sync feature copies datapoints into a special file and only transfers new data
-# TODO: progress bar for file transfer
+# TODO Sync feature copies datapoints into a special file and only transfers new data
+# TODO progress bar for file transfer
+# TODO fix crash when exporting 0 datapoints
+# TODO Enable memory wipe from main menu (can already do this from export_all sub-menu)
+# TODO fix crash when CONFIGURE_NSP is completed
 
 from gc import collect
 import serial
@@ -14,7 +17,6 @@ import os
 from threading import Thread
 from os.path import exists
 import matplotlib.pyplot as plt
-import mplcursors as mpc
 
 # helpers
 cls = lambda: os.system('cls')              # clear console
@@ -48,7 +50,7 @@ commands = {
     "_SET_DATETIME": "05",
     "_SAY_HELLO": "07",
     "SET_DEVICE_NAME": "08",
-    "GET_INFO": "09",
+    "_GET_INFO": "09",
     "_NSP_SETTINGS": "10",
     "SET_CALIBRATION_FACTOR": "11",
     "_START_RECORDING": "12",
@@ -339,6 +341,7 @@ if __name__ == "__main__":
 
                     device_name = ""
                     use_ae = True
+                    calibration_factor = 1
                     frame_avg = 3
                     int_time = 500
                     collection_freq = 0
@@ -348,7 +351,7 @@ if __name__ == "__main__":
                         # get the device name
                         inp = input("Set a device name? (NSP)\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Datapoint not captured. Sensor not configured."
                             break
                         
                         if (len(inp) == 0):
@@ -360,7 +363,7 @@ if __name__ == "__main__":
                         # Use auto-exposure?
                         inp = input("Use auto-exposure? (y) or n\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Datapoint not captured. Sensor not configured."
                             break
                         
                         if (len(inp) == 0 or inp.lower() == 'y'):
@@ -372,7 +375,7 @@ if __name__ == "__main__":
                                 while True:                            
                                     inp = input("Enter a custom integration time between 1 and 1000 (500)\n>").strip()
                                     if inp.lower() == "cancel" or inp.lower() == "exit":
-                                        response = "Command cancelled. Datapoint not captured."
+                                        response = "Command cancelled. Sensor not configured."
                                         cancel = True
                                         break
                                     
@@ -391,12 +394,23 @@ if __name__ == "__main__":
                             
                         else:
                             use_ae = False
-                            
+                         
+                        cls()
+                        # set calibration factor?
+                        inp = input("What is the calibration factor? (1.0)\n>").strip()
+                        if inp.lower() == "cancel" or inp.lower() == "exit":
+                            response = "Command cancelled. Sensor not configured.."
+                            break
+                        
+                        if (len(inp) != 0 and is_float(inp)):
+                            calibration_factor = inp
+                        
+                           
                         cls()
                         # how mnay frames to average into a single reading?
                         inp = input("How many frames to average? (3)\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Sensor not configured.."
                             break
                         
                         if (len(inp) == 0):
@@ -419,7 +433,7 @@ if __name__ == "__main__":
                         # what is the collection frequency?
                         inp = input("What is the collection frequency in ms? (60000 or 1 minute)\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Sensor not configured."
                             break
                         
                         if (len(inp) == 0):
@@ -438,7 +452,7 @@ if __name__ == "__main__":
                         # start recording ?
                         inp = input("Start recording data? y or (n)\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Sensor not configured."
                             break
                         
                         if (len(inp) == 0 or inp.lower() == 'n'):
@@ -555,7 +569,6 @@ if __name__ == "__main__":
                         plt.text(500, 300, "X: " + str(cie_x), ha='center', va='center', transform=None)
                         plt.text(500, 280, "Y: " + str(cie_y), ha='center', va='center', transform=None)
                         plt.text(500, 260, "Z: " + str(cie_z), ha='center', va='center', transform=None)
-                        mpc.cursor(hover=True)
                         plt.show()
                         
                     response = "Manual datapoint captured."
@@ -660,7 +673,7 @@ if __name__ == "__main__":
                 
                 trigger_update = True
                 
-            elif (selected_command == "GET_INFO"):
+            elif (selected_command == "_GET_INFO"):
                 command_to_send = commands["GET_INFO"]
                 write_to_device(command_to_send, s)
                 response = read_from_device(s)
