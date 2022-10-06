@@ -130,6 +130,9 @@ Hardware (optional)
 
 <h3 id="layout">Layout</h3>
 
+<img src="./Diagrams/wiring_diagram.png">
+
+<img src="./Diagrams/layout_animation.gif">
 
 <h3>Soldering</h3>
 
