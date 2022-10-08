@@ -7,6 +7,10 @@ Command-line tool suite for Open Spectral Sensing (OSS) device.
 # TODO fix crash when exporting 0 datapoints
 # TODO Enable memory wipe from main menu (can already do this from export_all sub-menu)
 # TODO fix crash when CONFIGURE_NSP is completed
+# TODO look into high CPU usage while trasferring serial
+# TODO fix issue where extract data is writing blank line to file or reading blank line from file
+# TODO leading zeros on hour minute and second, and date
+
 
 from gc import collect
 import serial
