@@ -232,11 +232,11 @@ String format_line(SpectrumInfo infoS, bool manual_measurement, bool too_dark, i
   line += ",";
 
   // 9. Then put in the CIE1931 values
-  line += String(infoS.X);
+  line += String(infoS.X, CIE_PRECISION);
   line += ",";
-  line += String(infoS.Y);
+  line += String(infoS.Y, CIE_PRECISION);
   line += ",";
-  line += String(infoS.Z);
+  line += String(infoS.Z, CIE_PRECISION);
   line += ",";
 
   // 10. Then put in the spectrum data. Sensor reads 340-1010 nm (inclusive) in 5 nm increments

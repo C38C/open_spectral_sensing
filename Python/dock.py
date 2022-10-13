@@ -7,14 +7,13 @@ Command-line tool suite for Open Spectral Sensing (OSS) device.
 # TODO DONE fix crash when exporting 0 datapoints
 # TODO DONE Enable memory wipe from main menu (can already do this from export_all sub-menu)
 # TODO DONE fix crash when CONFIGURE_NSP is completed
-# TODO look into high CPU usage while trasferring serial
-# TODO CNR IPR fix issue where extract data is writing blank line to file or reading blank line from file
+# TODO DNF look into high CPU usage while trasferring serial
+# TODO DNF IPR fix issue where extract data is writing blank line to file or reading blank line from file
 # TODO DONE leading zeros on hour minute and second, and date
 # TODO IPR fix sync issue when log file deleted manually
 # TODO IPR scheduled capture start and stop
 
-from audioop import add
-from genericpath import isfile
+import math
 import serial
 import serial.tools.list_ports
 import time
@@ -630,9 +629,11 @@ if __name__ == "__main__":
                         b = s.read(s.in_waiting)
                         bytes_read += len(b)
                         
-                        cls()
-                        print(str((bytes_read / file_size) * 100) + " % exported")
+                        percentage_transferred = (bytes_read / file_size) * 100
                         
+                        cls()
+                        print(str(percentage_transferred) + " % exported")
+                    
                         if (b.strip()[-2:] == b'OK'):
                             break
                         
