@@ -187,22 +187,43 @@ Use the following table to help cut, match, and solder wires:
 Wires for the microSD card reader are soldered from the bottom, wires for the NSP32m are soldered from the top.
 Two wires connect to single common pins on the nRF52840 for GND, 3V3, SCK, DO, and DI.
 
+<h3>3D Printing</h3>
+
+The case consists of three separate parts that come together to enclose the sensor. They are locatetd in the ```3D Models\Case``` directory.
+
+
+<h4>Material</h4>
+PETG (recommended), PLA, ABS, etc. Recommended material is PETG due to its flexibiliy. PLA and ABS can be used, but repeated strain may cause parts to snap.
+
+<h4>Layer height</h4>
+0.12 mm or finer.
+
+<h4>Supports</h4>
+Yes, as shown in orange.
+
+<h4>Part orientation</h4>
+
+**If using FDM printer, the part orientation is important for maximum strentgh.**
+
+<img src="./Diagrams/print_orientation.png">
+
+
 <h3>Assembly</h3>
 
-1. Insert the NSP32m sensor through the hole in the bottom part of the case
+1. Insert the NSP32m sensor through the hole in the ```top``` part of the case
 2. Slide in the nRF52840 while gently pushing down the NSP32m, ensuring the microSD reader slides in to its slot when the nRF52840 is half-way inserted.
-3. Slide the battery into the top part of the case as shown. The cable will come around to the front through the channel on the side.
-4. Snap together both the bottom and top parts of the case, making sure the silicone wires are out of the way.
-5. 
+3. Slide the battery into the ```bottom``` part of the case as shown. The cable will come around to the front through the channel on the side.
+4. Snap together both the ```bottom``` and ```top``` parts of the case, making sure the silicone wires are out of the way.
+5. Fit two M2 hex bolts into the ```cap```. They are compression fit.
+6. **Before installing the ```cap```, make sure to program the sensor, as the USB port is inaccessible with the ```cap``` on.**
+6. *Once the sensor has been programmed*, slide the ```cap``` onto the case, lining up the forks on the sides.
+7. Screw in two M2x8mm bolts through the forks. 
+8. (optional) Insert lanyard loop.
 
-
-
+*The sensor is not waterproof, please keep it dry.*
 
 
 <h2 id="calibration">Calibration</h2>
-
-
-
 
 ...
 
