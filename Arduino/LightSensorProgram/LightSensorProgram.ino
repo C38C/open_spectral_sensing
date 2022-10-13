@@ -81,6 +81,9 @@ int s_dark_readings = 0; // how many sequential dark readings?
 char ser_buffer[32]; // the serial buffer
 int read_index = 0; // the serial buffer read index
 
+// TIMED START
+
+
 // OBJECTS
 ArduinoAdaptor adaptor(PinRst, PinSS); // master MCU adaptor
 NSP32 nsp32( & adaptor, NSP32::ChannelSpi); // NSP32 (using SPI channel)
@@ -368,7 +371,11 @@ void pause(bool do_pause) {
 }
 
 void sleep_until_capture() {
-  //  if (!recording || timeStatus() == timeNotSet){
+
+  // check if timed start or stop reached
+  
+  
+  
   if (!recording) {
     if (!Serial) delay(SLEEP_DURATION);
     return;
@@ -511,7 +518,7 @@ void loop() {
       } else if (ser_buffer[0] == '0' && ser_buffer[1] == '8') {
         // 08: Set device name
         String s_buf = String(ser_buffer);
-        device_name = String(DEV_NAME_PREFIX) + String(s_buf.substring(s_buf.indexOf("_") + 1));
+        device_name = String(DEV_NAME_PREFIX) + "_" + String(s_buf.substring(s_buf.indexOf("_") + 1));
         update_memory();
         Serial.println("OK");
 
@@ -597,15 +604,21 @@ void loop() {
 
         Serial.println("OK");      
         
-      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '6') {
-        // 16: Erase storage
+      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '7') {
+        // 17: Set start time
 
-        st.delete_file();
-        data_counter = 0;
-        update_memory();
+        // what date and time to start at
+        String s_buf = String(ser_buffer);
+        String start_date = s_buf.substring(s_buf.indexOf("_") + 1);
 
-        Serial.println("OK");
-      }else {
+        
+        
+        
+      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '8') {
+        // 18: Set stop time
+        
+        
+      } else {
         Serial.println("Err '" + String(ser_buffer) + "'");
       }
 

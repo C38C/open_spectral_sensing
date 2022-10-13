@@ -8,7 +8,7 @@ Command-line tool suite for Open Spectral Sensing (OSS) device.
 # TODO DONE Enable memory wipe from main menu (can already do this from export_all sub-menu)
 # TODO DONE fix crash when CONFIGURE_NSP is completed
 # TODO DNF look into high CPU usage while trasferring serial
-# TODO DNF IPR fix issue where extract data is writing blank line to file or reading blank line from file
+# TODO DONE IPR fix issue where extract data is writing blank line to file or reading blank line from file
 # TODO DONE leading zeros on hour minute and second, and date
 # TODO IPR fix sync issue when log file deleted manually
 # TODO IPR scheduled capture start and stop
@@ -37,8 +37,7 @@ MAX_TRANSFER_DATAPOINTS = 100               # the suggested maximum number of da
 
 # serial
 s = None                                    # the currently selected serial device
-d = None
-command_to_send = ""                            # the serial instruction to send to device
+command_to_send = ""                        # the serial instruction to send to device
 
 # FIILE IO
 SAVE_DIR = "./data/"                        # directory for saving files
@@ -54,23 +53,26 @@ commands = {
     "MANUAL_CAPTURE": "01",
     "EXPORT_ALL": "02",
     "_SYNC_DATAPOINTS": "15",
-    "ERASE_STORAGE": "16",
+    "ERASE_STORAGE": "14",
     "SET_COLLECTION_INTERVAL": "04",
-    "_SET_DATETIME": "05",
-    "_SAY_HELLO": "07",
     "SET_DEVICE_NAME": "08",
-    "_GET_INFO": "09",
-    "_NSP_SETTINGS": "10",
     "SET_CALIBRATION_FACTOR": "11",
     "RESET_DEVICE": "03",
+    
     "_START_RECORDING": "12",
     "_STOP_RECORDING": "13",
-    "_DELETE_STORAGE": "14",
+    "_SET_DATETIME": "05",
+    "_SAY_HELLO": "07",
+    "_GET_INFO": "09",
+    "_NSP_SETTINGS": "10",
+    "_SET_START_TIME": "17",
+    "_SET_STOP_TIME": "18",
 }
 
 local_functions = [
     "DISCONNECT",
     "CONFIGURE_NSP",
+    "TIMED_START_STOP",
     "REFRESH",
 ]
 
@@ -500,8 +502,9 @@ if __name__ == "__main__":
                     trigger_update = True
                     response = "Refreshed."
                     continue
-             
-                break
+                else:
+                    response = "UNKNOWN SYSTEM COMMAND"
+                    continue
 
             # find the right command to send
             selected_command = list(public_commands.keys())[inp]
@@ -653,7 +656,7 @@ if __name__ == "__main__":
                 
                 if delete_data:
                     trigger_update = True
-                    write_to_device(commands["_DELETE_STORAGE"], s)
+                    write_to_device(commands["ERASE_STORAGE"], s)
                     res = read_from_device(s)
                     if res[0].lower() != "OK":
                         response += " File could not be deleted from device storage."
