@@ -55,27 +55,32 @@ $ python dock.py
 The program will begin looking for a connected spectral sensor, connect to it, then display the menu below. From this menu, you can see the sensor name, sensor port, the current status of the sensor, as well as the current recording interval in ms. You can also start a manual recording, or change other sensor settings. 
 
 ```
-Time has been set successfully to 20221005165331
+Refreshed.
 ---
-Selected device: NSPS on port: COM20.
-Currently PAUSED. Recording interval is set to 15000
+Selected device: NSP_A on port: COM20.
+Currently PAUSED. Recording interval is set to 60000
 ---
 [1] START_RECORDING
 [2] MANUAL_CAPTURE
 [3] EXPORT_ALL (0 entries)
-[4] RESET_DEVICE
+[4] ERASE_STORAGE
 [5] SET_COLLECTION_INTERVAL
 [6] SET_DEVICE_NAME
 [7] SET_CALIBRATION_FACTOR
-[8] DISCONNECT
-[9] CONFIGURE_NSP
-[10] REFRESH
+[8] RESET_DEVICE
+[9] DISCONNECT
+[10] CONFIGURE_NSP
+[11] TIMED_START_STOP
+[12] REFRESH
 Choose a command by entering the number in front
 >
-```
-From here, you can enter ```9``` to enter ```CONFIGURE_NSP``` which will guide you through setting up the sensor for quickly capturing data. 
 
-Alternatively, you can set the recording interval by entering ```5```, then start the recording by entering ```1```. Then, you can disconnect the device by entering ```8```. This step does not set the device name, and uses default capture settings.
+
+
+```
+From here, you can enter ```10``` to enter ```CONFIGURE_NSP``` which will guide you through setting up the sensor for quickly capturing data. 
+
+Alternatively, you can set the recording interval by entering ```5```, then start the recording by entering ```1```. Then, you can disconnect the device by entering ```9```. This step does not set the device name, and uses default capture settings.
 
 At this point, you can disconnect the USB cable if the device is already connected to the battery. The device will continue to collect data according to the interval you set. 
 

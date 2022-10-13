@@ -6,7 +6,7 @@ Command-line tool suite for Open Spectral Sensing (OSS) device.
 # TODO DONE progress bar for file transfer
 # TODO DONE fix crash when exporting 0 datapoints
 # TODO DONE Enable memory wipe from main menu (can already do this from export_all sub-menu)
-# TODO DONE fix crash when CONFIGURE_NSP is completed
+# TODO DONE fix crash when CONFIGURE_SENSOR is completed
 # TODO DNF look into high CPU usage while trasferring serial
 # TODO DONE IPR fix issue where extract data is writing blank line to file or reading blank line from file
 # TODO DONE leading zeros on hour minute and second, and date
@@ -71,7 +71,7 @@ commands = {
 
 local_functions = [
     "DISCONNECT",
-    "CONFIGURE_NSP",
+    "CONFIGURE_SENSOR",
     "TIMED_START_STOP",
     "REFRESH",
 ]
@@ -349,7 +349,7 @@ if __name__ == "__main__":
                     cls()
                     print("Goodbye!")
                     exit()                     
-                elif (selected_command == "CONFIGURE_NSP"):
+                elif (selected_command == "CONFIGURE_SENSOR"):
 
                     device_name = ""
                     use_ae = True
