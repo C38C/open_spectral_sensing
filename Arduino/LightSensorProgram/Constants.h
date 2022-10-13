@@ -17,7 +17,8 @@
 #define MIN_WAVELENGTH 340 // the minimum wavelength we are interested in
 #define MAX_WAVELENGTH 1010 // the maximum wavelength we are interested in
 #define DEF_FRAME_AVG 3 // how many frames to average into single reading
-#define CAPTURE_PRECISION 18 // how many digits of precision to write (18 digits)
+#define CAPTURE_PRECISION 18 // how many digits of precision for SPD values
+#define CIE_PRECISION 4 // how many digits of precision for CIE1931 values
 #define DEF_CALIBRATION_FACTOR 1 // the calibration factor for the particular sensor
 #define MIN_ACCEPTABLE_Y 5 // the minimum acceptable Y value for reading (CIE1931)
 #define STARTING_DARK_INT_TIME 500 // the starting integration time for correcting dark readings

@@ -81,6 +81,9 @@ int s_dark_readings = 0; // how many sequential dark readings?
 char ser_buffer[32]; // the serial buffer
 int read_index = 0; // the serial buffer read index
 
+// TIMED START
+
+
 // OBJECTS
 ArduinoAdaptor adaptor(PinRst, PinSS); // master MCU adaptor
 NSP32 nsp32( & adaptor, NSP32::ChannelSpi); // NSP32 (using SPI channel)
@@ -187,18 +190,23 @@ String format_line(SpectrumInfo infoS, bool manual_measurement, bool too_dark, i
   String line = "";
 
   // 1. Which date was this data point collected on?
+  if (day() < 10) line += "0";
   line += String(day());
   line += "/";
+  if (month() < 10) line += "0";
   line += String(month());
   line += "/";
   line += String(year());
   line += ",";
 
   // 2. When was this data point collected?  
+  if (hour() < 10) line += "0";
   line += String(hour());
   line += ":";
+  if (minute() < 10) line += "0";
   line += String(minute());
   line += ":";
+  if (second() < 10) line += "0";
   line += String(second());
   line += ",";
 
@@ -227,11 +235,11 @@ String format_line(SpectrumInfo infoS, bool manual_measurement, bool too_dark, i
   line += ",";
 
   // 9. Then put in the CIE1931 values
-  line += String(infoS.X);
+  line += String(infoS.X, CIE_PRECISION);
   line += ",";
-  line += String(infoS.Y);
+  line += String(infoS.Y, CIE_PRECISION);
   line += ",";
-  line += String(infoS.Z);
+  line += String(infoS.Z, CIE_PRECISION);
   line += ",";
 
   // 10. Then put in the spectrum data. Sensor reads 340-1010 nm (inclusive) in 5 nm increments
@@ -363,7 +371,11 @@ void pause(bool do_pause) {
 }
 
 void sleep_until_capture() {
-  //  if (!recording || timeStatus() == timeNotSet){
+
+  // check if timed start or stop reached
+  
+  
+  
   if (!recording) {
     if (!Serial) delay(SLEEP_DURATION);
     return;
@@ -434,9 +446,10 @@ void loop() {
         if (was_recording) pause(true);
 
         Serial.println("DATA");
+        Serial.println(st.get_size());
 
         if (st.open_file()) {
-          st.seek_to_start();
+          st.seek_to(0);
           while (st.file_available()) {
             byte b = st.read_byte();
             Serial.write(b);
@@ -449,7 +462,6 @@ void loop() {
         
         st.close_file();
         
-        Serial.flush();
         // do not send \r\n when streaming
         Serial.write("OK");
 
@@ -506,7 +518,7 @@ void loop() {
       } else if (ser_buffer[0] == '0' && ser_buffer[1] == '8') {
         // 08: Set device name
         String s_buf = String(ser_buffer);
-        device_name = String(DEV_NAME_PREFIX) + String(s_buf.substring(s_buf.indexOf("_") + 1));
+        device_name = String(DEV_NAME_PREFIX) + "_" + String(s_buf.substring(s_buf.indexOf("_") + 1));
         update_memory();
         Serial.println("OK");
 
@@ -555,6 +567,56 @@ void loop() {
         data_counter = 0;
         update_memory();
         Serial.println("OK");
+        
+      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '5') {
+        // 15: sync data
+        
+        // which byte do we start with
+        String s_buf = String(ser_buffer);
+        unsigned long start_pointer = atol(s_buf.substring(s_buf.indexOf("_") + 1).c_str());
+
+        if (st.open_file()) {
+          // open the file
+          
+          Serial.println("DATA");
+    
+          unsigned long file_size = st.get_size();
+
+          if (file_size < start_pointer) {
+            // computer sync file larger than device
+            Serial.println(-1);
+            return;
+          }
+          
+          Serial.println(file_size - start_pointer);
+          
+          st.seek_to(start_pointer);
+          
+          while (st.file_available()) {
+            byte b = st.read_byte();
+            Serial.write(b);
+          }
+
+          st.close_file();
+        } else {
+          Serial.println("ERR");
+        }
+
+        Serial.println("OK");      
+        
+      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '7') {
+        // 17: Set start time
+
+        // what date and time to start at
+        String s_buf = String(ser_buffer);
+        String start_date = s_buf.substring(s_buf.indexOf("_") + 1);
+
+        
+        
+        
+      } else if (ser_buffer[0] == '1' && ser_buffer[1] == '8') {
+        // 18: Set stop time
+        
         
       } else {
         Serial.println("Err '" + String(ser_buffer) + "'");

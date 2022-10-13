@@ -31,16 +31,14 @@ class Storage {
   /* Open the file, Write a line, then close the file. */
   bool write_line(String * line);
 
-  /* Read a line given line number from the SD file */
-  String get_line(unsigned int line);
-
   bool file_available();
-  void seek_to_start();
+  
+  void seek_to(unsigned long b);
+
+  unsigned long get_size();
 
   byte read_byte();
 
-  /* Read a line and move onto the next. Consecutively calling this function returns all lines in file. */
-  String read_line(unsigned int line, unsigned int buf_size);
 };
 
 #endif

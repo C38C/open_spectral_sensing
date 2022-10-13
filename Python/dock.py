@@ -2,10 +2,18 @@
 Command-line tool suite for Open Spectral Sensing (OSS) device.
 '''
 
-# TODO: Sync feature copies datapoints into a special file and only transfers new data
-# TODO: progress bar for file transfer
+# TODO IPR Sync feature copies datapoints into a special file and only transfers new data
+# TODO DONE progress bar for file transfer
+# TODO DONE fix crash when exporting 0 datapoints
+# TODO DONE Enable memory wipe from main menu (can already do this from export_all sub-menu)
+# TODO DONE fix crash when CONFIGURE_SENSOR is completed
+# TODO DNF look into high CPU usage while trasferring serial
+# TODO DONE IPR fix issue where extract data is writing blank line to file or reading blank line from file
+# TODO DONE leading zeros on hour minute and second, and date
+# TODO IPR fix sync issue when log file deleted manually
+# TODO IPR scheduled capture start and stop
 
-from gc import collect
+import math
 import serial
 import serial.tools.list_ports
 import time
@@ -14,7 +22,6 @@ import os
 from threading import Thread
 from os.path import exists
 import matplotlib.pyplot as plt
-import mplcursors as mpc
 
 # helpers
 cls = lambda: os.system('cls')              # clear console
@@ -26,14 +33,16 @@ MIN_WAVELENGTH = 340                        # sensor minimum wavelength
 MAX_WAVELENGTH = 1010                       # sensor maximum wavelength
 WAVELENGTH_STEPSIZE = 5                     # sensor stepsize
 MIN_LOGGING_INTERVAL = 10000                # the minimum logging interval
+MAX_TRANSFER_DATAPOINTS = 100               # the suggested maximum number of datapoints to transfer over serial
 
 # serial
 s = None                                    # the currently selected serial device
-command_to_send = ""                            # the serial instruction to send to device
+command_to_send = ""                        # the serial instruction to send to device
 
 # FIILE IO
 SAVE_DIR = "./data/"                        # directory for saving files
 FILE_EXT = ".CSV"                           # file extension
+SYNC_FILE_NAME = "SYNC"
 
 # user input
 inp = ""
@@ -43,22 +52,27 @@ commands = {
     "TOGGLE_DATA_CAPTURE": "00",
     "MANUAL_CAPTURE": "01",
     "EXPORT_ALL": "02",
-    "RESET_DEVICE": "03",
+    "_SYNC_DATAPOINTS": "15",
+    "ERASE_STORAGE": "14",
     "SET_COLLECTION_INTERVAL": "04",
-    "_SET_DATETIME": "05",
-    "_SAY_HELLO": "07",
     "SET_DEVICE_NAME": "08",
-    "GET_INFO": "09",
-    "_NSP_SETTINGS": "10",
     "SET_CALIBRATION_FACTOR": "11",
+    "RESET_DEVICE": "03",
+    
     "_START_RECORDING": "12",
     "_STOP_RECORDING": "13",
-    "_DELETE_STORAGE": "14",
+    "_SET_DATETIME": "05",
+    "_SAY_HELLO": "07",
+    "_GET_INFO": "09",
+    "_NSP_SETTINGS": "10",
+    "_SET_START_TIME": "17",
+    "_SET_STOP_TIME": "18",
 }
 
 local_functions = [
     "DISCONNECT",
-    "CONFIGURE_NSP",
+    "CONFIGURE_SENSOR",
+    "TIMED_START_STOP",
     "REFRESH",
 ]
 
@@ -86,7 +100,7 @@ def read_from_device(serial_object):
     return response
 
 # open a new file for writing. If file name already exists, append a number
-def open_file(filename, add_header = False, byte_file = False):
+def open_file(filename, add_header = False, open_mode = 'w', overwrite = False):
     
     # if the "data" directory doesn't exist, create it
     if (not os.path.exists(SAVE_DIR)): os.makedirs(SAVE_DIR)
@@ -96,10 +110,10 @@ def open_file(filename, add_header = False, byte_file = False):
     file_suffix = -1
     while True:
         save_filename = SAVE_DIR + str(filename) + (str(file_suffix) if file_suffix > -1 else "") + FILE_EXT
-        if exists(save_filename):
+        if exists(save_filename) and not overwrite:
             file_suffix += 1
         else:
-            f = open(save_filename, "wb" if byte_file else "w")
+            f = open(save_filename, open_mode)
             break
         
     # add the file header
@@ -156,15 +170,15 @@ def update_device_status(s):
             # save the name to the response
             device = {"port_name": s.port, 
                       "device_name": device_name, 
-                      "logging_interval": logging_interval, 
-                      "data_counter": data_counter,
+                      "logging_interval": int(logging_interval), 
+                      "data_counter": int(data_counter),
                       "device_status": device_status}
     
         return device
     
     except Exception as e:
         return None
-                
+           
 def find_devices():
     # list of serial ports connected to the computer
     ports = []
@@ -193,7 +207,7 @@ def find_devices():
 
 def get_formatted_date():
     return (str(datetime.datetime.now().year).zfill(4) +
-            str(datetime.datetime.now().month).zfill(2) +
+            str(datetime.datetime.now().month - 3).zfill(2) +
             str(datetime.datetime.now().day).zfill(2) +
             str(datetime.datetime.now().hour).zfill(2) +
             str(datetime.datetime.now().minute).zfill(2) +
@@ -335,10 +349,11 @@ if __name__ == "__main__":
                     cls()
                     print("Goodbye!")
                     exit()                     
-                elif (selected_command == "CONFIGURE_NSP"):
+                elif (selected_command == "CONFIGURE_SENSOR"):
 
                     device_name = ""
                     use_ae = True
+                    calibration_factor = 1
                     frame_avg = 3
                     int_time = 500
                     collection_freq = 0
@@ -348,7 +363,7 @@ if __name__ == "__main__":
                         # get the device name
                         inp = input("Set a device name? (NSP)\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Datapoint not captured. Sensor not configured."
                             break
                         
                         if (len(inp) == 0):
@@ -360,7 +375,7 @@ if __name__ == "__main__":
                         # Use auto-exposure?
                         inp = input("Use auto-exposure? (y) or n\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Datapoint not captured. Sensor not configured."
                             break
                         
                         if (len(inp) == 0 or inp.lower() == 'y'):
@@ -372,7 +387,7 @@ if __name__ == "__main__":
                                 while True:                            
                                     inp = input("Enter a custom integration time between 1 and 1000 (500)\n>").strip()
                                     if inp.lower() == "cancel" or inp.lower() == "exit":
-                                        response = "Command cancelled. Datapoint not captured."
+                                        response = "Command cancelled. Sensor not configured."
                                         cancel = True
                                         break
                                     
@@ -391,12 +406,23 @@ if __name__ == "__main__":
                             
                         else:
                             use_ae = False
-                            
+                         
+                        cls()
+                        # set calibration factor?
+                        inp = input("What is the calibration factor? (1.0)\n>").strip()
+                        if inp.lower() == "cancel" or inp.lower() == "exit":
+                            response = "Command cancelled. Sensor not configured.."
+                            break
+                        
+                        if (len(inp) != 0 and is_float(inp)):
+                            calibration_factor = inp
+                        
+                           
                         cls()
                         # how mnay frames to average into a single reading?
                         inp = input("How many frames to average? (3)\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Sensor not configured.."
                             break
                         
                         if (len(inp) == 0):
@@ -419,7 +445,7 @@ if __name__ == "__main__":
                         # what is the collection frequency?
                         inp = input("What is the collection frequency in ms? (60000 or 1 minute)\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Sensor not configured."
                             break
                         
                         if (len(inp) == 0):
@@ -438,7 +464,7 @@ if __name__ == "__main__":
                         # start recording ?
                         inp = input("Start recording data? y or (n)\n>").strip()
                         if inp.lower() == "cancel" or inp.lower() == "exit":
-                            response = "Command cancelled. Datapoint not captured."
+                            response = "Command cancelled. Sensor not configured."
                             break
                         
                         if (len(inp) == 0 or inp.lower() == 'n'):
@@ -469,13 +495,16 @@ if __name__ == "__main__":
                         read_from_device(s)
                         
                     response = "Device configured."
+                    trigger_update = True
+                    continue
                             
                 elif (selected_command == "REFRESH"):
                     trigger_update = True
                     response = "Refreshed."
                     continue
-             
-                break
+                else:
+                    response = "UNKNOWN SYSTEM COMMAND"
+                    continue
 
             # find the right command to send
             selected_command = list(public_commands.keys())[inp]
@@ -555,7 +584,6 @@ if __name__ == "__main__":
                         plt.text(500, 300, "X: " + str(cie_x), ha='center', va='center', transform=None)
                         plt.text(500, 280, "Y: " + str(cie_y), ha='center', va='center', transform=None)
                         plt.text(500, 260, "Z: " + str(cie_z), ha='center', va='center', transform=None)
-                        mpc.cursor(hover=True)
                         plt.show()
                         
                     response = "Manual datapoint captured."
@@ -564,17 +592,29 @@ if __name__ == "__main__":
                     
             elif (selected_command == "EXPORT_ALL"):
                 
+                # check if no data 
+                if d["data_counter"] == 0:
+                    response = "No data to export."
+                    continue
+                
+                # check if too much data, 
+                if (d["data_counter"] > MAX_TRANSFER_DATAPOINTS):
+                    inp = input("For large amounts of data, it is recommended to read from the microSD directly. Do you wish to continue exporting anyways? (y) or n\n>").strip()
+                    if (len(inp) != 0 or inp.lower() == 'n'):
+                        response = "Export cancelled. No data transferred."
+                        continue
+                
                 delete_data = False
                 
                 inp = input("Delete datapoints from device storage after exporting? (y) or n?\n>").strip()
                 if inp.lower() == "cancel" or inp.lower() == "exit":
                     response = "Command cancelled. Data not exported."
-                    break
+                    continue
                 
                 if (len(inp) == 0 or inp.lower() == 'y'):
                     delete_data = True
                 
-                f, filename = open_file(get_formatted_date(), byte_file = True)
+                f, filename = open_file(get_formatted_date(), open_mode='wb')
                 command_to_send = commands["EXPORT_ALL"]
                 write_to_device(command_to_send, s)
                 
@@ -583,13 +623,29 @@ if __name__ == "__main__":
                 
                 if (h_data.lower() != "data"):
                     response = "Could not export data. Please try again."
-                    break
+                    continue
+                
+                # read the file size header
+                file_size = int(s.readline().decode().strip())
+                
+                if (file_size <= 0):
+                    response = "Could not read file. Please try again."
+                    continue
 
+                bytes_read = 0
+                
                 while True:
                     if s.in_waiting > 0:
+                                               
                         b = s.read(s.in_waiting)
+                        bytes_read += len(b)
                         
-                        if (b == b'OK'):
+                        percentage_transferred = (bytes_read / file_size) * 100
+                        
+                        cls()
+                        print(str(percentage_transferred) + " % exported")
+                    
+                        if (b.strip()[-2:] == b'OK'):
                             break
                         
                         f.write(b)
@@ -600,11 +656,76 @@ if __name__ == "__main__":
                 
                 if delete_data:
                     trigger_update = True
-                    write_to_device(commands["_DELETE_STORAGE"], s)
+                    write_to_device(commands["ERASE_STORAGE"], s)
                     res = read_from_device(s)
                     if res[0].lower() != "OK":
                         response += " File could not be deleted from device storage."
                 
+            elif (selected_command == "SYNC_DATAPOINTS"):
+                
+                # open the sync file and find the file size in bytes
+                sync_file_size = 0
+                filename = ""
+                f = None
+                
+                
+                
+                if not exists(SAVE_DIR + SYNC_FILE_NAME + FILE_EXT):
+                    f, filename = open_file(SYNC_FILE_NAME, overwrite = True)
+                else:
+                    sync_file_size = os.stat(SAVE_DIR + SYNC_FILE_NAME + FILE_EXT).st_size
+                    
+                # close the datapoint file
+                if f: f.close()
+                
+                # send the byte size to the sensor
+                command_to_send = commands["SYNC_DATAPOINTS"]
+                command_to_send += "_" + str(sync_file_size)
+            
+                print(command_to_send)
+                exit()
+
+                write_to_device(command_to_send, s)
+                
+                # read the DATA response
+                response = s.readline().decode().strip()
+
+                if (response.lower() != "data"):
+                    response = "Could not SYNC."
+                    continue
+                
+                # read the file size header
+                file_size = int(s.readline().decode().strip())
+                if (file_size == -1):
+                    # sync mismatch
+                    response = "There is a sync issue. Please export all sensor data and reset the device."
+                    continue
+            
+                # open the sync file for writing
+                f, filename = open_file("SYNC", open_mode = 'wb', overwrite = True)
+
+                bytes_read = 0
+                
+                while True:
+                    if s.in_waiting > 0:
+                        
+                        b = s.read(s.in_waiting)
+                        bytes_read += len(b)
+                        
+                        cls()
+                        print(str((bytes_read / file_size) * 100) + " % exported")
+                        
+                        if (b.strip()[-2:] == b'OK'):
+                            break
+                        
+                        f.write(b)
+
+                
+                # close the SYNC file
+                f.close()
+                
+                response = "Datapoints synchronized. " + str(bytes_read) + " bytes read."                
+
             elif (selected_command == "RESET_DEVICE"):
                 command_to_send = commands["RESET_DEVICE"]
                 write_to_device(command_to_send, s)
@@ -614,6 +735,18 @@ if __name__ == "__main__":
                 else:
                     response = "Device could not be reset. Please try again."
                     
+                trigger_update = True
+                
+            elif (selected_command == "ERASE_STORAGE"):
+                command_to_send = commands["ERASE_STORAGE"]
+                write_to_device(command_to_send, s)
+                
+                response = read_from_device(s)
+                if (response[0].lower() == "ok"):
+                    response = "Device storage successfully erased."
+                else:
+                    response = "Storage could not be erased. Please try again."
+                
                 trigger_update = True
                 
             elif (selected_command == "SET_COLLECTION_INTERVAL"):
@@ -660,7 +793,7 @@ if __name__ == "__main__":
                 
                 trigger_update = True
                 
-            elif (selected_command == "GET_INFO"):
+            elif (selected_command == "_GET_INFO"):
                 command_to_send = commands["GET_INFO"]
                 write_to_device(command_to_send, s)
                 response = read_from_device(s)
