@@ -33,6 +33,7 @@ MIN_WAVELENGTH = 340                        # sensor minimum wavelength
 MAX_WAVELENGTH = 1010                       # sensor maximum wavelength
 WAVELENGTH_STEPSIZE = 5                     # sensor stepsize
 MIN_LOGGING_INTERVAL = 10000                # the minimum logging interval
+MAX_TRANSFER_DATAPOINTS = 100               # the suggested maximum number of datapoints to transfer over serial
 
 # serial
 s = None                                    # the currently selected serial device
@@ -52,7 +53,7 @@ commands = {
     "TOGGLE_DATA_CAPTURE": "00",
     "MANUAL_CAPTURE": "01",
     "EXPORT_ALL": "02",
-    "SYNC_DATAPOINTS": "15",
+    "_SYNC_DATAPOINTS": "15",
     "ERASE_STORAGE": "16",
     "SET_COLLECTION_INTERVAL": "04",
     "_SET_DATETIME": "05",
@@ -593,6 +594,13 @@ if __name__ == "__main__":
                     response = "No data to export."
                     continue
                 
+                # check if too much data, 
+                if (d["data_counter"] > MAX_TRANSFER_DATAPOINTS):
+                    inp = input("For large amounts of data, it is recommended to read from the microSD directly. Do you wish to continue exporting anyways? (y) or n\n>").strip()
+                    if (len(inp) != 0 or inp.lower() == 'n'):
+                        response = "Export cancelled. No data transferred."
+                        continue
+                
                 delete_data = False
                 
                 inp = input("Delete datapoints from device storage after exporting? (y) or n?\n>").strip()
@@ -654,11 +662,15 @@ if __name__ == "__main__":
                 
                 # open the sync file and find the file size in bytes
                 sync_file_size = 0
+                filename = ""
+                f = None
                 
-                if not os.path.isfile(SYNC_FILE_NAME + FILE_EXT):
-                    f, filename = open_file(SYNC_FILE_NAME, add_header=True, overwrite = True)
+                
+                
+                if not exists(SAVE_DIR + SYNC_FILE_NAME + FILE_EXT):
+                    f, filename = open_file(SYNC_FILE_NAME, overwrite = True)
                 else:
-                    sync_file_size = os.stat(SAVE_DIR + filename).st_size
+                    sync_file_size = os.stat(SAVE_DIR + SYNC_FILE_NAME + FILE_EXT).st_size
                     
                 # close the datapoint file
                 if f: f.close()
@@ -666,6 +678,9 @@ if __name__ == "__main__":
                 # send the byte size to the sensor
                 command_to_send = commands["SYNC_DATAPOINTS"]
                 command_to_send += "_" + str(sync_file_size)
+            
+                print(command_to_send)
+                exit()
 
                 write_to_device(command_to_send, s)
                 
@@ -706,7 +721,7 @@ if __name__ == "__main__":
                 # close the SYNC file
                 f.close()
                 
-                response = "Datapoints synchronized."                
+                response = "Datapoints synchronized. " + str(bytes_read) + " bytes read."                
 
             elif (selected_command == "RESET_DEVICE"):
                 command_to_send = commands["RESET_DEVICE"]
