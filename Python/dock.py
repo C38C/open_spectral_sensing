@@ -2,17 +2,19 @@
 Command-line tool suite for Open Spectral Sensing (OSS) device.
 '''
 
-# TODO Sync feature copies datapoints into a special file and only transfers new data
-# TODO progress bar for file transfer
-# TODO fix crash when exporting 0 datapoints
-# TODO Enable memory wipe from main menu (can already do this from export_all sub-menu)
-# TODO fix crash when CONFIGURE_NSP is completed
+# TODO IPR Sync feature copies datapoints into a special file and only transfers new data
+# TODO DONE progress bar for file transfer
+# TODO DONE fix crash when exporting 0 datapoints
+# TODO DONE Enable memory wipe from main menu (can already do this from export_all sub-menu)
+# TODO DONE fix crash when CONFIGURE_NSP is completed
 # TODO look into high CPU usage while trasferring serial
-# TODO fix issue where extract data is writing blank line to file or reading blank line from file
-# TODO leading zeros on hour minute and second, and date
+# TODO CNR IPR fix issue where extract data is writing blank line to file or reading blank line from file
+# TODO DONE leading zeros on hour minute and second, and date
+# TODO IPR fix sync issue when log file deleted manually
+# TODO IPR scheduled capture start and stop
 
-
-from gc import collect
+from audioop import add
+from genericpath import isfile
 import serial
 import serial.tools.list_ports
 import time
@@ -35,11 +37,13 @@ MIN_LOGGING_INTERVAL = 10000                # the minimum logging interval
 
 # serial
 s = None                                    # the currently selected serial device
+d = None
 command_to_send = ""                            # the serial instruction to send to device
 
 # FIILE IO
 SAVE_DIR = "./data/"                        # directory for saving files
 FILE_EXT = ".CSV"                           # file extension
+SYNC_FILE_NAME = "SYNC"
 
 # user input
 inp = ""
@@ -49,7 +53,8 @@ commands = {
     "TOGGLE_DATA_CAPTURE": "00",
     "MANUAL_CAPTURE": "01",
     "EXPORT_ALL": "02",
-    "RESET_DEVICE": "03",
+    "SYNC_DATAPOINTS": "15",
+    "ERASE_STORAGE": "16",
     "SET_COLLECTION_INTERVAL": "04",
     "_SET_DATETIME": "05",
     "_SAY_HELLO": "07",
@@ -57,6 +62,7 @@ commands = {
     "_GET_INFO": "09",
     "_NSP_SETTINGS": "10",
     "SET_CALIBRATION_FACTOR": "11",
+    "RESET_DEVICE": "03",
     "_START_RECORDING": "12",
     "_STOP_RECORDING": "13",
     "_DELETE_STORAGE": "14",
@@ -92,7 +98,7 @@ def read_from_device(serial_object):
     return response
 
 # open a new file for writing. If file name already exists, append a number
-def open_file(filename, add_header = False, byte_file = False):
+def open_file(filename, add_header = False, open_mode = 'w', overwrite = False):
     
     # if the "data" directory doesn't exist, create it
     if (not os.path.exists(SAVE_DIR)): os.makedirs(SAVE_DIR)
@@ -102,10 +108,10 @@ def open_file(filename, add_header = False, byte_file = False):
     file_suffix = -1
     while True:
         save_filename = SAVE_DIR + str(filename) + (str(file_suffix) if file_suffix > -1 else "") + FILE_EXT
-        if exists(save_filename):
+        if exists(save_filename) and not overwrite:
             file_suffix += 1
         else:
-            f = open(save_filename, "wb" if byte_file else "w")
+            f = open(save_filename, open_mode)
             break
         
     # add the file header
@@ -162,15 +168,15 @@ def update_device_status(s):
             # save the name to the response
             device = {"port_name": s.port, 
                       "device_name": device_name, 
-                      "logging_interval": logging_interval, 
-                      "data_counter": data_counter,
+                      "logging_interval": int(logging_interval), 
+                      "data_counter": int(data_counter),
                       "device_status": device_status}
     
         return device
     
     except Exception as e:
         return None
-                
+           
 def find_devices():
     # list of serial ports connected to the computer
     ports = []
@@ -199,7 +205,7 @@ def find_devices():
 
 def get_formatted_date():
     return (str(datetime.datetime.now().year).zfill(4) +
-            str(datetime.datetime.now().month).zfill(2) +
+            str(datetime.datetime.now().month - 3).zfill(2) +
             str(datetime.datetime.now().day).zfill(2) +
             str(datetime.datetime.now().hour).zfill(2) +
             str(datetime.datetime.now().minute).zfill(2) +
@@ -487,6 +493,8 @@ if __name__ == "__main__":
                         read_from_device(s)
                         
                     response = "Device configured."
+                    trigger_update = True
+                    continue
                             
                 elif (selected_command == "REFRESH"):
                     trigger_update = True
@@ -581,17 +589,22 @@ if __name__ == "__main__":
                     
             elif (selected_command == "EXPORT_ALL"):
                 
+                # check if no data 
+                if d["data_counter"] == 0:
+                    response = "No data to export."
+                    continue
+                
                 delete_data = False
                 
                 inp = input("Delete datapoints from device storage after exporting? (y) or n?\n>").strip()
                 if inp.lower() == "cancel" or inp.lower() == "exit":
                     response = "Command cancelled. Data not exported."
-                    break
+                    continue
                 
                 if (len(inp) == 0 or inp.lower() == 'y'):
                     delete_data = True
                 
-                f, filename = open_file(get_formatted_date(), byte_file = True)
+                f, filename = open_file(get_formatted_date(), open_mode='wb')
                 command_to_send = commands["EXPORT_ALL"]
                 write_to_device(command_to_send, s)
                 
@@ -600,13 +613,27 @@ if __name__ == "__main__":
                 
                 if (h_data.lower() != "data"):
                     response = "Could not export data. Please try again."
-                    break
+                    continue
+                
+                # read the file size header
+                file_size = int(s.readline().decode().strip())
+                
+                if (file_size <= 0):
+                    response = "Could not read file. Please try again."
+                    continue
 
+                bytes_read = 0
+                
                 while True:
                     if s.in_waiting > 0:
+                                               
                         b = s.read(s.in_waiting)
+                        bytes_read += len(b)
                         
-                        if (b == b'OK'):
+                        cls()
+                        print(str((bytes_read / file_size) * 100) + " % exported")
+                        
+                        if (b.strip()[-2:] == b'OK'):
                             break
                         
                         f.write(b)
@@ -622,6 +649,64 @@ if __name__ == "__main__":
                     if res[0].lower() != "OK":
                         response += " File could not be deleted from device storage."
                 
+            elif (selected_command == "SYNC_DATAPOINTS"):
+                
+                # open the sync file and find the file size in bytes
+                sync_file_size = 0
+                
+                if not os.path.isfile(SYNC_FILE_NAME + FILE_EXT):
+                    f, filename = open_file(SYNC_FILE_NAME, add_header=True, overwrite = True)
+                else:
+                    sync_file_size = os.stat(SAVE_DIR + filename).st_size
+                    
+                # close the datapoint file
+                if f: f.close()
+                
+                # send the byte size to the sensor
+                command_to_send = commands["SYNC_DATAPOINTS"]
+                command_to_send += "_" + str(sync_file_size)
+
+                write_to_device(command_to_send, s)
+                
+                # read the DATA response
+                response = s.readline().decode().strip()
+
+                if (response.lower() != "data"):
+                    response = "Could not SYNC."
+                    continue
+                
+                # read the file size header
+                file_size = int(s.readline().decode().strip())
+                if (file_size == -1):
+                    # sync mismatch
+                    response = "There is a sync issue. Please export all sensor data and reset the device."
+                    continue
+            
+                # open the sync file for writing
+                f, filename = open_file("SYNC", open_mode = 'wb', overwrite = True)
+
+                bytes_read = 0
+                
+                while True:
+                    if s.in_waiting > 0:
+                        
+                        b = s.read(s.in_waiting)
+                        bytes_read += len(b)
+                        
+                        cls()
+                        print(str((bytes_read / file_size) * 100) + " % exported")
+                        
+                        if (b.strip()[-2:] == b'OK'):
+                            break
+                        
+                        f.write(b)
+
+                
+                # close the SYNC file
+                f.close()
+                
+                response = "Datapoints synchronized."                
+
             elif (selected_command == "RESET_DEVICE"):
                 command_to_send = commands["RESET_DEVICE"]
                 write_to_device(command_to_send, s)
@@ -631,6 +716,18 @@ if __name__ == "__main__":
                 else:
                     response = "Device could not be reset. Please try again."
                     
+                trigger_update = True
+                
+            elif (selected_command == "ERASE_STORAGE"):
+                command_to_send = commands["ERASE_STORAGE"]
+                write_to_device(command_to_send, s)
+                
+                response = read_from_device(s)
+                if (response[0].lower() == "ok"):
+                    response = "Device storage successfully erased."
+                else:
+                    response = "Storage could not be erased. Please try again."
+                
                 trigger_update = True
                 
             elif (selected_command == "SET_COLLECTION_INTERVAL"):

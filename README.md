@@ -2,19 +2,20 @@
 
 ## Table of Contents
 1. [About the Project](#about-the-project)
-2. [Overview](#overview)
-3. [Getting Started](#getting-started)
-4. [Build Guide](#build-guide)
-7. [Calibration](#calibration)
-8. [Troubleshooting](#troubleshooting)
-9. [References](#references)
-10. [Credits](#credits)
+1. [Overview](#overview)
+1. [Getting Started](#getting-started)
+1. [Capturing Data](#capturing-data)
+1. [Build Guide](#build-guide)
+1. [Calibration](#calibration)
+1. [Troubleshooting](#troubleshooting)
+1. [References](#references)
+1. [Credits](#credits)
 
 <h2 id="about-the-project">About the Project</h2>
-Visible light is made up of several individual wavelengths, each with their own power level. By measuring the power distribution of light throughout the spectrum, we can begin to identify light and quantify its qualities. A spectral sensor measures the power levels at each wavelength (340 nm - 1010 nm). This data can be used for various use-cases such as in color calibration, agriculture, health, and more. 
+Visible light is made up of several individual wavelengths, each with their own power level. By measuring the power distribution of light throughout the spectrum, we can begin to identify light and quantify its qualities. A spectral sensor measures the power levels at each wavelength. This data can be used for various use-cases such as in color calibration, agriculture, health, and more. 
 
 <h2 id="overview">Overview</h2>
-The sensor is programmed using Arduino (C++) and communicates via program written in Python. The sensor consists of off-the-shelf components from Sparkfun, and a spectral sensor from nanoLambda - producing an easy-to-assemble spectral sensor. The goal of this project is to make light research accessible to anyone.
+The sensor is programmed using Arduino (C++) and communicates via a Python program. The sensor consists of off-the-shelf components from Sparkfun, and a spectral sensor from nanoLambda - producing an easy-to-assemble spectral sensing device. The goal of this project is to create an open-source and affordable spectral sensing device in order to make light research more accessible.
 
 <h2 id="getting-started">Getting Started</h2>
 
@@ -23,11 +24,18 @@ For wiring, and assembly instructions, see the [Build Guide](#build-guide).
 <h3>Installation</h3>
 
 
-- You must first install the firmware using provided [compiled binaries]() by following the instrucions below:
+- You must first install the firmware onto the device using provided [compiled binaries]() by following the instrucions below:
     
     - Connect the sensor to a computer via USB
-    - with the sensor powered on, double tap the RESET button on the side. (If the sensor is enclosed in the case, you can use an M2 allen-key through the provided hole on the side of the case). This will bring up the "NRF52BOOT" sensor folder..
-    - Drag and drop the "firmware_xxxx.uf2" file into this new folder. The sensor will automatically disconnect and update the firmware.
+    - With the sensor powered on, double tap the RESET button on the side. (If the sensor is enclosed in the case, you can use an M2 allen-key through the provided hole on the side of the case). This will bring up the "NRF52BOOT" sensor folder.
+    - Drag and drop the compiled binary ("firmware_xxxx.uf2") file into this new folder. The sensor will automatically disconnect and update the firmware.
+    - Disconnect and reconnect the sensor.
+
+- To connect to the sensor using ```dock.py```, first install matplotlib and pySerial.
+```
+$ pip install matplotlib
+$ pip install pyserial
+```
 
 - (Optional) To build your own firmware using the provided source, you must install Arduino IDE and the following libraries:
 
@@ -36,19 +44,15 @@ For wiring, and assembly instructions, see the [Build Guide](#build-guide).
     - Installing the Arduino Core for nRF52 Boards: https://learn.sparkfun.com/tutorials/nrf52840-development-with-arduino-and-circuitpython
     - Time library: https://github.com/PaulStoffregen/Time
 
-- To connect to the sensor using ```dock.py```, first install matplotlib and pySerial.
-```
-$ pip install matplotlib
-$ pip install pyserial
-```
+
 
 <h3>Usage</h3>
 
-Once you have assembled the sensor, and flashed the firmware, you can connect to it using the ```dock.py``` program.
+Once you have assembled the sensor, and flashed the firmware, and installed the required Python packages, you can connect to it using the ```dock.py``` program.
 ```
 $ python dock.py
 ```
-The program will begin looking for a connected spectral sensor, and automatically conenct to it. It will automatically synchronize the sensor time with the local computer time. The following menu will display:
+The program will begin looking for a connected spectral sensor, connect to it, then display the menu below. From this menu, you can see the sensor name, sensor port, the current status of the sensor, as well as the current recording interval in ms. You can also start a manual recording, or change other sensor settings. 
 
 ```
 Time has been set successfully to 20221005165331
@@ -69,27 +73,27 @@ Currently PAUSED. Recording interval is set to 15000
 Choose a command by entering the number in front
 >
 ```
-From here, you can enter ```9``` to enter ```CONFIGURE_NSP``` which will guide you through setting up the sensor for capturing data. 
+From here, you can enter ```9``` to enter ```CONFIGURE_NSP``` which will guide you through setting up the sensor for quickly capturing data. 
 
-From this menu, you can see the sensor name, sensor port, the current status of the sensor, as well as the current recording interval in ms.
+Alternatively, you can set the recording interval by entering ```5```, then start the recording by entering ```1```. Then, you can disconnect the device by entering ```8```. This step does not set the device name, and uses default capture settings.
 
-You can also start a manual recording, or change other sensor settings.
-
-
-
-Once the device has been detected by ```dock.py```, you would set the recording interval by entering ```5```, then start the recording by entering ```1```. Then, you can disconnect the device by entering ```8```.
-
-At this point, you can disconnect the USB cable if the device is already connected to the battery. The device will continue to collect data according to the interval you set.
+At this point, you can disconnect the USB cable if the device is already connected to the battery. The device will continue to collect data according to the interval you set. 
 
 <i>Note that if the device powers off somehow due to a disconnected battery or lack of charge, it will stop recording until started again through</i> ```dock.py```.
 
-<h3>Data</h3>
+<h4>Reading Data </h4>
 
-Data is stored on the sensor in a ".CSV" format. There are 146 columns. Columns 1 - 11 hold information about the spectral measurement, and columns 12 - 146 hold the spectral power distribution at 5 nm intervals from 340 nm to 1010 nm. Each row is a unique captured datapoint.
+Enter ```3``` to export all data stored on the device onto the conneced computer. Look for a "data" folder in the same directory as ```dock.py```. 
+
+For large files that contain over 500 datapoints, it is recommended to read data directly off the microSD by ejecting it from the sensor. The microSD can be accessed by removing the cap only.
+
+<h4>Data Structure</h4>
+
+Data is stored on the sensor in a CSV format. There are 146 columns. Columns 1 - 11 hold information about the spectral measurement, and columns 12 - 146 hold the spectral power distribution at 5 nm intervals from 340 nm to 1010 nm. Each row is a unique captured datapoint.
 
 | Column # | Column title | Example data | Range    | Description                                                                                                       |
 |----------|--------------|--------------|----------|-------------------------------------------------------------------------------------------------------------------|
-| 1        | DATE         | 5/10/2022    | -        | The date on which this datapoint was captured. |
+| 1        | DATE         | 05/10/2022   | -        | The date on which this datapoint was captured. |
 | 2        | TIME         | 12:30:37     | -        | The time on which this datapoint was captured. |
 | 3        | MANUAL       | 1            | 0 or 1   | Was this datapoint captured manually? 1 if yes, 0 if no. |
 | 4        | INT_TIME     | 448          | 1 - 1000 | The integration time used for this datapoint. Exposure time (ms) = (896*[IntegrationTime] + 160) / 500 |
@@ -102,13 +106,37 @@ Data is stored on the sensor in a ".CSV" format. There are 146 columns. Columns 
 | 11       | Z            | 21.73        | -        | CIE1931 Z value. |
 | 12 - 146       | 340 - 1010            |  -       | -        | spectral power in W/m<sup>2</sup>. |
 
-<h3>LEDs</h3>
+<h4>Charging</h4>
 
-The sensor has three on-board LEDs: red, blue, and orange. The red LED is always on when the sensor is powered on. The orange LED is only on when the battery is charging, off when charge complete or battery is not connected. The blue LED behaviour can be classified using the following list:
+The device will automatically turn off when the battery voltage is too low. Simply plug the sensor into a computer via USB to begin charging. See [LEDs](#leds) for charging indicator.
+
+<h4 id="leds">LEDs</h4>
+
+The sensor has three on-board LEDs: red, blue, and orange. The red LED is always on when the sensor is powered on. The orange LED is only on when the battery is charging, off when charge complete or battery is not connected. 
+
+The blue LED behaviour can be classified using the following list:
 
 - Solid on when sensor has not been setup and it is not recording.
 - On for a brief moment while sensor is collecting data, off otherwise.
 - Flashes to indicate a problem. See [Troubleshooting](#troubleshooting).
+
+<h2 id="capturing-data">Capturing Data</h2>
+
+There are three ways to capture data using the sensor.
+
+<h3>Automatic</h3>
+
+Automatic capture is when you plug in the device, and start recording via the ```START_RECORDING``` menu option in ```dock.py```. The recording interval must be set. Recording will last until stopped via the dock program, or if power is lost.
+
+<h3>Automatic timed start and stop</h3>
+
+This mode is for creating a start and end time for datapoint capture. You can schedule a recording to start, and/or end. 
+
+<h3>Manual capture</h3>
+
+With the device plugged in and connected to the dock program, you can initiate a datapoint capture by selecting ```[2] MANUAL_CAPTURE```. A recording interval does not need to be set for this mode. The device will capture one measurement and save it to device memory.
+
+With this feature, you can also preview a graph of the datapoint once captured. 
 
 <h2 id="build-guide">Build Guide</h2>
 
@@ -125,12 +153,14 @@ Electronics
 
 Hardware (optional)
 
-6. [3D printed case]()
-7. 2x M2 bolts and 2x nuts
+6. [3D printed case ]() (Found in ```3D Models\Case```)
+7. 2x M2 bolts and 2x nuts (for cap)
 
-<h3 id="layout">Layout</h3>
+<h3 id="wiring-diagram">Wiring Diagram</h3>
 
 <img src="./Diagrams/wiring_diagram.png">
+
+<h3 id="layout">Layout</h3>
 
 <img src="./Diagrams/layout_animation.gif">
 
@@ -140,14 +170,39 @@ To allow for a small device footprint, flexible 30 AWG silicone wire is used. Ap
 
 Soldering happens from both the top and bottom of the nRF52840. "Helping hands" are highly recommended, as well as a fine-tip soldering iron.
 
+Use the following table to help cut, match, and solder wires:
+
+| Wire  # | Length (cm) | Pin on nRF52840 | Pin on microSD card reader | Pin on nanoLambda NSP32m |
+|---------|-------------|-----------------|----------------------------|--------------------------|
+| 1       |             | GND             | GND                        | GND                      |
+| 2       |             | 3V3             | VCC                        | 3V3                      |
+| 3       |             | 4               | CS                         | -                        |
+| 4       |             | 5               | -                          | CS                       |
+| 5       |             | 28              | -                          | RST                      |
+| 6       |             | 29              | -                          | RDY                      |
+| 7       |             | 30              | SCK                        | SCK                      |
+| 8       |             | 31              | DO/MISO                    | DO/MISO                  |
+| 9       |             | 3               | DI/MOSI                    | DI/MOSI                  |
+
+Wires for the microSD card reader are soldered from the bottom, wires for the NSP32m are soldered from the top.
+Two wires connect to single common pins on the nRF52840 for GND, 3V3, SCK, DO, and DI.
+
 <h3>Assembly</h3>
 
+1. Insert the NSP32m sensor through the hole in the bottom part of the case
+2. Slide in the nRF52840 while gently pushing down the NSP32m, ensuring the microSD reader slides in to its slot when the nRF52840 is half-way inserted.
+3. Slide the battery into the top part of the case as shown. The cable will come around to the front through the channel on the side.
+4. Snap together both the bottom and top parts of the case, making sure the silicone wires are out of the way.
+5. 
 
 
 
 
 
 <h2 id="calibration">Calibration</h2>
+
+
+
 
 ...
 
@@ -167,8 +222,9 @@ Soldering happens from both the top and bottom of the nRF52840. "Helping hands" 
 
 <h2 id="references">References</h2>
 
-1. nanoLambda documentation
-2. 
+1. nanoLambda
+2. Arduino 
+3. 
 
 <h2 id="credits">Credits</h2>
 
