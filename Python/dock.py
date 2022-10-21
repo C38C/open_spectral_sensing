@@ -3,15 +3,10 @@ Command-line tool suite for Open Spectral Sensing (OSS) device.
 '''
 
 # TODO IPR Sync feature copies datapoints into a special file and only transfers new data
-# TODO DONE progress bar for file transfer
-# TODO DONE fix crash when exporting 0 datapoints
-# TODO DONE Enable memory wipe from main menu (can already do this from export_all sub-menu)
-# TODO DONE fix crash when CONFIGURE_SENSOR is completed
-# TODO DNF look into high CPU usage while trasferring serial
-# TODO DONE IPR fix issue where extract data is writing blank line to file or reading blank line from file
-# TODO DONE leading zeros on hour minute and second, and date
+# TODO IPR look into high CPU usage while trasferring serial, slow serial
 # TODO IPR fix sync issue when log file deleted manually
 # TODO IPR scheduled capture start and stop
+# TODO use SDFat instead of SD in Arduino to improve SD performance
 
 import math
 import serial
@@ -643,7 +638,7 @@ if __name__ == "__main__":
                         percentage_transferred = (bytes_read / file_size) * 100
                         
                         cls()
-                        print(str(percentage_transferred) + " % exported")
+                        print(str(round(percentage_transferred, 5)) + " % exported")
                     
                         if (b.strip()[-2:] == b'OK'):
                             break
