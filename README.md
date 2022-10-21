@@ -36,6 +36,7 @@ For wiring, and assembly instructions, see the [Build Guide](#build-guide).
     - Installing the Arduino Core for nRF52 Boards: https://learn.sparkfun.com/tutorials/nrf52840-development-with-arduino-and-circuitpython
     - Time library: https://github.com/PaulStoffregen/Time
 
+<<<<<<< Updated upstream
 - To connect to the sensor using ```dock.py```, first install matplotlib and pySerial.
 ```
 $ pip install matplotlib
@@ -45,6 +46,22 @@ $ pip install pyserial
 <h3>Usage</h3>
 
 Once you have assembled the sensor, and flashed the firmware, you can connect to it using the ```dock.py``` program.
+=======
+    &nbsp;
+
+    In Arduino IDE, set the following programming settings before uploading to the device:
+
+    - Board: "SparkFun Pro nRF52840 Mini"
+    - SoftDevice: "s140 6.1.1 r0"
+    - Debug: Level 0 (Release)
+    - Port: *choose the device port*
+    - Programmer: "Bootloader DFU for Bluefruit nRF52"
+
+
+<h3>Usage</h3>
+
+Once you have assembled the sensor, flashed the firmware, and installed the required Python packages, you can connect to it using the ```dock.py``` program.
+>>>>>>> Stashed changes
 ```
 $ python dock.py
 ```
@@ -110,6 +127,27 @@ The sensor has three on-board LEDs: red, blue, and orange. The red LED is always
 - On for a brief moment while sensor is collecting data, off otherwise.
 - Flashes to indicate a problem. See [Troubleshooting](#troubleshooting).
 
+<<<<<<< Updated upstream
+=======
+<h2 id="capturing-data">Capturing Data</h2>
+
+There are three ways to capture data using the sensor.
+
+1. <h3>Automatic</h3>
+
+    Automatic capture is when you plug in the device, and start recording via the ```START_RECORDING``` menu option in ```dock.py```. The recording interval must be set. Recording will last until stopped via the dock program, or if power is lost.
+
+2. <h3>Automatic timed start and stop</h3>
+
+    This mode is for creating a start and end time for datapoint capture. You can schedule a recording to start, and/or end. 
+
+3. <h3>Manual capture</h3>
+
+    With the device plugged in and connected to the dock program, you can initiate a datapoint capture by selecting ```[2] MANUAL_CAPTURE```. A recording interval does not need to be set for this mode. The device will capture one measurement and save it to device memory.
+
+With this feature, you can also preview a graph of the datapoint once captured. 
+
+>>>>>>> Stashed changes
 <h2 id="build-guide">Build Guide</h2>
 
 <h3>Parts List</h3>
@@ -125,8 +163,13 @@ Electronics
 
 Hardware (optional)
 
+<<<<<<< Updated upstream
 6. [3D printed case]()
 7. 2x M2 bolts and 2x nuts
+=======
+1. [3D printed case ]() (Found in ```3D Models\Case```)
+2. 2x M2 bolts and 2x nuts (for cap)
+>>>>>>> Stashed changes
 
 <h3 id="layout">Layout</h3>
 
@@ -140,7 +183,53 @@ To allow for a small device footprint, flexible 30 AWG silicone wire is used. Ap
 
 Soldering happens from both the top and bottom of the nRF52840. "Helping hands" are highly recommended, as well as a fine-tip soldering iron.
 
+<<<<<<< Updated upstream
 <h3>Assembly</h3>
+=======
+The fully soldered sensor looks like this:
+
+<img src="">
+
+Use the following table to help cut, match, and solder wires:
+
+| Wire  # | Length (cm) | Pin on nRF52840 | Pin on microSD card reader | Pin on nanoLambda NSP32m |
+|---------|-------------|-----------------|----------------------------|--------------------------|
+| 1       |             | GND             | GND                        | GND                      |
+| 2       |             | 3V3             | VCC                        | 3V3                      |
+| 3       |             | 4               | CS                         | -                        |
+| 4       |             | 5               | -                          | CS                       |
+| 5       |             | 28              | -                          | RST                      |
+| 6       |             | 29              | -                          | RDY                      |
+| 7       |             | 30              | SCK                        | SCK                      |
+| 8       |             | 31              | DO/MISO                    | DO/MISO                  |
+| 9       |             | 3               | DI/MOSI                    | DI/MOSI                  |
+
+Wires for the microSD card reader are soldered from the bottom, wires for the NSP32m are soldered from the top.
+Two wires connect to single common pins on the nRF52840 for GND, 3V3, SCK, DO, and DI.
+
+<h3>3D Printing</h3>
+
+The case consists of three separate parts that come together to enclose the sensor. They are locatetd in the ```3D Models\Case``` directory.
+
+
+- <h4>Material</h4>
+
+    PETG (recommended), PLA, ABS, etc. Recommended material is PETG due to its flexibiliy. PLA and ABS can be used, but repeated strain may cause parts to snap.
+
+- <h4>Layer height</h4>
+
+    0.12 mm or finer.
+
+- <h4>Supports</h4>
+
+    Yes, as shown in orange.
+
+- <h4>Part orientation</h4>
+
+    **If using FDM printer, the part orientation is important for maximum strentgh.**
+
+    <img src="./Diagrams/print_orientation.png">
+>>>>>>> Stashed changes
 
 
 
