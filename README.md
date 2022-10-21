@@ -36,17 +36,6 @@ For wiring, and assembly instructions, see the [Build Guide](#build-guide).
     - Installing the Arduino Core for nRF52 Boards: https://learn.sparkfun.com/tutorials/nrf52840-development-with-arduino-and-circuitpython
     - Time library: https://github.com/PaulStoffregen/Time
 
-<<<<<<< Updated upstream
-- To connect to the sensor using ```dock.py```, first install matplotlib and pySerial.
-```
-$ pip install matplotlib
-$ pip install pyserial
-```
-
-<h3>Usage</h3>
-
-Once you have assembled the sensor, and flashed the firmware, you can connect to it using the ```dock.py``` program.
-=======
     &nbsp;
 
     In Arduino IDE, set the following programming settings before uploading to the device:
@@ -61,7 +50,6 @@ Once you have assembled the sensor, and flashed the firmware, you can connect to
 <h3>Usage</h3>
 
 Once you have assembled the sensor, flashed the firmware, and installed the required Python packages, you can connect to it using the ```dock.py``` program.
->>>>>>> Stashed changes
 ```
 $ python dock.py
 ```
@@ -127,8 +115,6 @@ The sensor has three on-board LEDs: red, blue, and orange. The red LED is always
 - On for a brief moment while sensor is collecting data, off otherwise.
 - Flashes to indicate a problem. See [Troubleshooting](#troubleshooting).
 
-<<<<<<< Updated upstream
-=======
 <h2 id="capturing-data">Capturing Data</h2>
 
 There are three ways to capture data using the sensor.
@@ -147,7 +133,6 @@ There are three ways to capture data using the sensor.
 
 With this feature, you can also preview a graph of the datapoint once captured. 
 
->>>>>>> Stashed changes
 <h2 id="build-guide">Build Guide</h2>
 
 <h3>Parts List</h3>
@@ -163,13 +148,8 @@ Electronics
 
 Hardware (optional)
 
-<<<<<<< Updated upstream
-6. [3D printed case]()
-7. 2x M2 bolts and 2x nuts
-=======
 1. [3D printed case ]() (Found in ```3D Models\Case```)
 2. 2x M2 bolts and 2x nuts (for cap)
->>>>>>> Stashed changes
 
 <h3 id="layout">Layout</h3>
 
@@ -183,9 +163,6 @@ To allow for a small device footprint, flexible 30 AWG silicone wire is used. Ap
 
 Soldering happens from both the top and bottom of the nRF52840. "Helping hands" are highly recommended, as well as a fine-tip soldering iron.
 
-<<<<<<< Updated upstream
-<h3>Assembly</h3>
-=======
 The fully soldered sensor looks like this:
 
 <img src="">
@@ -229,7 +206,6 @@ The case consists of three separate parts that come together to enclose the sens
     **If using FDM printer, the part orientation is important for maximum strentgh.**
 
     <img src="./Diagrams/print_orientation.png">
->>>>>>> Stashed changes
 
 
 
