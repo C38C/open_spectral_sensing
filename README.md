@@ -177,17 +177,18 @@ Soldering happens from both the top and bottom of the nRF52840. "Helping hands" 
 
 Use the following table to help cut, match, and solder wires:
 
-| Wire  # | Length (cm) | Pin on nRF52840 | Pin on microSD card reader | Pin on nanoLambda NSP32m |
-|---------|-------------|-----------------|----------------------------|--------------------------|
-| 1       |             | GND             | GND                        | GND                      |
-| 2       |             | 3V3             | VCC                        | 3V3                      |
-| 3       |             | 4               | CS                         | -                        |
-| 4       |             | 5               | -                          | CS                       |
-| 5       |             | 28              | -                          | RST                      |
-| 6       |             | 29              | -                          | RDY                      |
-| 7       |             | 30              | SCK                        | SCK                      |
-| 8       |             | 31              | DO/MISO                    | DO/MISO                  |
-| 9       |             | 3               | DI/MOSI                    | DI/MOSI                  |
+| Wire  # | Length for SD (mm) | Length for NSP (mm) | Pin on nRF52840 | Pin on microSD card reader | Pin on nanoLambda NSP32m |
+|---------|--------------------|---------------------|-----------------|----------------------------|--------------------------|
+| 1       | 20                 | 55                  | GND             | GND                        | GND                      |
+| 2       | 25                 | 50                  | 3V3             | VCC                        | 3V3                      |
+| 3       | 20                 | -                   | 4               | CS                         | -                        |
+| 4       | -                  | 45                  | 5               | -                          | CS                       |
+| 5       | -                  | 45                  | 28              | -                          | RST                      |
+| 6       | -                  | 40                  | 29              | -                          | RDY                      |
+| 7       | 40                 | 45                  | 30              | SCK                        | SCK                      |
+| 8       | 50                 | 35                  | 31              | DO/MISO                    | DO/MISO                  |
+| 9       | 40                 | 45                  | 3               | DI/MOSI                    | DI/MOSI                  |
+
 
 Wires for the microSD card reader are soldered from the bottom, wires for the NSP32m are soldered from the top.
 Two wires connect to single common pins on the nRF52840 for GND, 3V3, SCK, DO, and DI.
@@ -243,8 +244,6 @@ Yes, as shown in orange.
 
 1. Connect the sensor to ```dock.py```
 2. Select ```RESET_DEVICE``` by entering ```4```
-
-<i>If problems persist, </i>
 
 <h2 id="references">References</h2>
 
