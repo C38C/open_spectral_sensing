@@ -90,6 +90,39 @@ NSP32 nsp32( & adaptor, NSP32::ChannelSpi); // NSP32 (using SPI channel)
 Storage st(SD_CS_PIN, LOG_FILENAME); // the data storage object
 Adafruit_LittleFS_Namespace::File file(InternalFS); // the metadata file stored in persistent flash
 
+/* Arduino setup function. */
+void setup() {
+  pinMode(PinReady, INPUT_PULLUP); // use pull-up for ready pin
+  pinMode(7, OUTPUT); // onboard LED output
+  digitalWrite(7, HIGH); // turn LED ON
+  attachInterrupt(digitalPinToInterrupt(PinReady),
+    PinReadyTriggerISR, FALLING); // enable interrupt for NSP READY
+  // initialize serial port
+  Serial.begin(BAUDRATE);
+
+
+  // initialize the persistent storage
+  InternalFS.begin();
+
+  // read persistent flash storage into memory
+  read_memory();
+
+  // if the SD storage object is errored, go into error state
+  if (!st.init()) error_state(1);
+
+  // initialize NSP32
+  nsp32.Init();
+  nsp32.Standby(0);
+
+  pause(true);
+  
+}
+
+// cause the LED to flash rapidly, and 
+void hang() {
+  
+}
+
 /* Get a reading from the NSP32 sensor */
 void read_sensor(SpectrumInfo * info, int use_int_time = 0, int use_frame_avg = 3, bool use_ae = true) {
   // wakeup the sensor if sleeping
@@ -324,37 +357,6 @@ void error_state(int code) {
 
 }
 
-/* Arduino setup function. */
-void setup() {
-  pinMode(PinReady, INPUT_PULLUP); // use pull-up for ready pin
-  pinMode(7, OUTPUT); // onboard LED output
-  digitalWrite(7, HIGH); // turn LED ON
-  attachInterrupt(digitalPinToInterrupt(PinReady),
-    PinReadyTriggerISR, FALLING); // enable interrupt for NSP READY
-  // initialize serial port
-  Serial.begin(BAUDRATE);
-  while (!Serial) delay(10);
-
-  // initialize the persistent storage
-  InternalFS.begin();
-  //  
-  //  delay(1000);
-  //  InternalFS.format();
-  //  Serial.println("FORMAT COMPLETE");
-  //  return;
-
-  // read persistent flash storage into memory
-  read_memory();
-
-  // if the SD storage object is errored, go into error state
-  if (!st.init()) error_state(1);
-
-  // initialize NSP32
-  nsp32.Init();
-  nsp32.Standby(0);
-
-  pause(true);
-}
 
 unsigned long paused_time = 0;
 unsigned long pause_duration = 0;
@@ -373,9 +375,7 @@ void pause(bool do_pause) {
 void sleep_until_capture() {
 
   // check if timed start or stop reached
-  
-  
-  
+
   if (!recording) {
     if (!Serial) delay(SLEEP_DURATION);
     return;
@@ -610,24 +610,24 @@ void loop() {
         // what date and time to start at
         String s_buf = String(ser_buffer);
         String start_date = s_buf.substring(s_buf.indexOf("_") + 1);
-
-        
-        
-        
+ 
       } else if (ser_buffer[0] == '1' && ser_buffer[1] == '8') {
         // 18: Set stop time
-        
-        
+
       } else {
         Serial.println("Err '" + String(ser_buffer) + "'");
       }
-
     }
-
   }
-
-  // hang for 15s or do a data capture when it is time
-  sleep_until_capture();
+  
+  // if time is not set, or is not recording, do not go to sleep and (do not capture)
+  if (timeStatus() == timeNotSet || !recording) {
+    delay(10);
+  } else {
+    // hang for set duration or do a data capture when it is time
+    digitalWrite(7, LOW);
+    sleep_until_capture();
+  }
 
 }
 

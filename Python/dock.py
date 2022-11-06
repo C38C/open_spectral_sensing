@@ -492,11 +492,16 @@ if __name__ == "__main__":
                     response = "Device configured."
                     trigger_update = True
                     continue
-                            
+                    
+                elif (selected_command == "TIMED_START_STOP"):
+                    response = "This feature has not been implemented yet."
+                    continue
+                       
                 elif (selected_command == "REFRESH"):
                     trigger_update = True
                     response = "Refreshed."
                     continue
+                
                 else:
                     response = "UNKNOWN SYSTEM COMMAND"
                     continue

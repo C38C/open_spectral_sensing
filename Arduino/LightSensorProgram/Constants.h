@@ -13,7 +13,7 @@
 
 // DEVICE SETTINGS
 #define DEF_CAPTURE_INTERVAL 60000 // how frequently to capture data in ms
-#define SLEEP_DURATION 1000 // how many ms to go into deep sleep for in between wake checks
+#define SLEEP_DURATION 60000 // how many ms to go into deep sleep for in between wake checks
 #define MIN_WAVELENGTH 340 // the minimum wavelength we are interested in
 #define MAX_WAVELENGTH 1010 // the maximum wavelength we are interested in
 #define DEF_FRAME_AVG 3 // how many frames to average into single reading
