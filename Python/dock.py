@@ -67,7 +67,7 @@ commands = {
 local_functions = [
     "DISCONNECT",
     "CONFIGURE_SENSOR",
-    "TIMED_START_STOP",
+    # "TIMED_START_STOP",
     "REFRESH",
 ]
 
@@ -202,7 +202,7 @@ def find_devices():
 
 def get_formatted_date():
     return (str(datetime.datetime.now().year).zfill(4) +
-            str(datetime.datetime.now().month - 3).zfill(2) +
+            str(datetime.datetime.now().month).zfill(2) +
             str(datetime.datetime.now().day).zfill(2) +
             str(datetime.datetime.now().hour).zfill(2) +
             str(datetime.datetime.now().minute).zfill(2) +
@@ -241,6 +241,9 @@ def is_float(val):
     
     
 if __name__ == "__main__":
+    
+    print(get_formatted_date())
+    exit()
               
     # start main loop
     while True:
@@ -600,7 +603,7 @@ if __name__ == "__main__":
                 # check if too much data, 
                 if (d["data_counter"] > MAX_TRANSFER_DATAPOINTS):
                     inp = input("For large amounts of data, it is recommended to read from the microSD directly. Do you wish to continue exporting anyways? (y) or n\n>").strip()
-                    if (len(inp) != 0 or inp.lower() == 'n'):
+                    if (inp.lower() == 'n'):
                         response = "Export cancelled. No data transferred."
                         continue
                 
@@ -658,8 +661,8 @@ if __name__ == "__main__":
                     trigger_update = True
                     write_to_device(commands["ERASE_STORAGE"], s)
                     res = read_from_device(s)
-                    if res[0].lower() != "OK":
-                        response += " File could not be deleted from device storage."
+                    # if res[0].lower() != "OK":
+                    #     response += " File could not be deleted from device storage."
                 
             elif (selected_command == "SYNC_DATAPOINTS"):
                 

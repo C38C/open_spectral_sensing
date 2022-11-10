@@ -159,7 +159,8 @@ Electronics
 Hardware (optional)
 
 6. [3D printed case ]() (Found in ```3D Models\Case```)
-7. 2x M2 bolts and 2x nuts (for cap)
+7. [2x] M2 bolts and [2x] nuts (for cap)
+8. [4x] 4x1.7mm cylindrical magnets
 
 <h3 id="wiring-diagram">Wiring Diagram</h3>
 
