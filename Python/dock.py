@@ -242,9 +242,6 @@ def is_float(val):
     
 if __name__ == "__main__":
     
-    print(get_formatted_date())
-    exit()
-              
     # start main loop
     while True:
         devices = find_devices()
