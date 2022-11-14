@@ -77,18 +77,18 @@ int frame_avg = DEF_FRAME_AVG; // how many frames to average
 bool ae = true; // use autoexposure?
 unsigned int data_counter = 0; // how many data points collected and stored
 int s_dark_readings = 0; // how many sequential dark readings?
+unsigned long paused_time = 0; // when was the sensor paused
+unsigned long pause_duration = 0; // how long was the sensor paused for?
 
 char ser_buffer[32]; // the serial buffer
 int read_index = 0; // the serial buffer read index
-
-// TIMED START
-
 
 // OBJECTS
 ArduinoAdaptor adaptor(PinRst, PinSS); // master MCU adaptor
 NSP32 nsp32( & adaptor, NSP32::ChannelSpi); // NSP32 (using SPI channel)
 Storage st(SD_CS_PIN, LOG_FILENAME); // the data storage object
 Adafruit_LittleFS_Namespace::File file(InternalFS); // the metadata file stored in persistent flash
+
 
 /* Arduino setup function. */
 void setup() {
@@ -115,11 +115,6 @@ void setup() {
   nsp32.Standby(0);
 
   pause(true);
-  
-}
-
-// cause the LED to flash rapidly, and 
-void hang() {
   
 }
 
@@ -300,6 +295,7 @@ void update_memory() {
   }
 }
 
+/* Read the persistent data in the nRF52840's internal flash */
 void read_memory() {
   String filename = "/" + String(METADATA_FILENAME) + String(FILE_EXT);
   file.open(filename.c_str(), FILE_O_READ);
@@ -354,13 +350,9 @@ void error_state(int code) {
     }
     delay(500);
   }
-
 }
 
-
-unsigned long paused_time = 0;
-unsigned long pause_duration = 0;
-
+/* Pause the sensor's logging if provided parameter is True, else resume */
 void pause(bool do_pause) {
   if (do_pause) {
     // remember when we paused
@@ -372,6 +364,9 @@ void pause(bool do_pause) {
   }
 }
 
+/* Sleep the device until it is time to capture next data point. 
+ * If time to next data point is greater than SLEEP_DURATION, sleep until SLEEP_DURATION.
+*/
 void sleep_until_capture() {
 
   // check if timed start or stop reached

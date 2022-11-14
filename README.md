@@ -28,7 +28,7 @@ For wiring, and assembly instructions, see the [Build Guide](#build-guide).
     
     - Connect the sensor to a computer via USB
     - With the sensor powered on, double tap the RESET button on the side. (If the sensor is enclosed in the case, you can use an M2 allen-key through the provided hole on the side of the case). This will bring up the "NRF52BOOT" sensor folder.
-    - Drag and drop the compiled binary ("firmware_xxxx.uf2") file into this new folder. The sensor will automatically disconnect and update the firmware.
+    - Drag and drop the compiled binary (.uf2) file into this new folder. The sensor will automatically disconnect and update the firmware.
     - Disconnect and reconnect the sensor.
 
 - To connect to the sensor using ```dock.py```, first install matplotlib and pySerial.
@@ -70,13 +70,9 @@ Currently PAUSED. Recording interval is set to 60000
 [8] RESET_DEVICE
 [9] DISCONNECT
 [10] CONFIGURE_NSP
-[11] TIMED_START_STOP
-[12] REFRESH
+[11] REFRESH
 Choose a command by entering the number in front
 >
-
-
-
 ```
 From here, you can enter ```10``` to enter ```CONFIGURE_NSP``` which will guide you through setting up the sensor for quickly capturing data. 
 
@@ -132,10 +128,6 @@ There are three ways to capture data using the sensor.
 <h3>Automatic</h3>
 
 Automatic capture is when you plug in the device, and start recording via the ```START_RECORDING``` menu option in ```dock.py```. The recording interval must be set. Recording will last until stopped via the dock program, or if power is lost.
-
-<h3>Automatic timed start and stop</h3>
-
-This mode is for creating a start and end time for datapoint capture. You can schedule a recording to start, and/or end. 
 
 <h3>Manual capture</h3>
 
@@ -217,6 +209,10 @@ Yes, as shown in orange.
 
 <h3>Assembly</h3>
 
+<img src="./Diagrams/install_sequence.png">
+
+&nbsp;
+
 1. Insert the NSP32m sensor through the hole in the ```top``` part of the case
 2. Slide in the nRF52840 while gently pushing down the NSP32m, ensuring the microSD reader slides in to its slot when the nRF52840 is half-way inserted.
 3. Slide the battery into the ```bottom``` part of the case as shown. The cable will come around to the front through the channel on the side.
@@ -254,4 +250,11 @@ Yes, as shown in orange.
 
 <h2 id="credits">Credits</h2>
 
-...
+- J. Alstan Jakubiec
+Assistant Professor, Daniels Faculty of Architecture + School of the Environment
+alstan.jakubiec@daniels.utoronto.ca
+- Sadi Wali
+Research Assistant, B.A.Arch
+- Arsalan Khan
+B.A.Sc. Physics and Computer Science Student
+
