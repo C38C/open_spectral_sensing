@@ -24,7 +24,7 @@ For wiring, and assembly instructions, see the [Build Guide](#build-guide).
 <h3>Installation</h3>
 
 
-- You must first install the firmware onto the device using provided [compiled binaries]() by following the instrucions below:
+- You must first install the firmware onto the device using provided [compiled binaries](https://github.com/C38C/open_spectral_sensing/releases) by following the instrucions below:
     
     - Connect the sensor to a computer via USB
     - With the sensor powered on, double tap the RESET button on the side. (If the sensor is enclosed in the case, you can use an M2 allen-key through the provided hole on the side of the case). This will bring up the "NRF52BOOT" sensor folder.
