@@ -450,7 +450,7 @@ void loop() {
 
         if (st.open_file()) {
           st.seek_to(0);
-          while (st.file_available()) {
+          while (st.file_available() && Serial) {
             byte b = st.read_byte();
             Serial.write(b);
           }
