@@ -8,14 +8,13 @@
 1. [Build Guide](#build-guide)
 1. [Calibration](#calibration)
 1. [Troubleshooting](#troubleshooting)
-1. [References](#references)
 1. [Credits](#credits)
 
 <h2 id="about-the-project">About the Project</h2>
-Visible light is made up of several individual wavelengths, each with their own power level. By measuring the power distribution of light throughout the spectrum, we can begin to identify light and quantify its qualities. A spectral sensor measures the power levels at each wavelength. This data can be used for various use-cases such as in color calibration, agriculture, health, and more. 
+Visible light is made up of several individual wavelengths, each with their own power level. By measuring the power distribution of light throughout the spectrum, we can begin to identify light and quantify its qualities. A spectral sensor measures the power levels at each wavelength. This data can be used for various use-cases such as in colour calibration, agriculture, health, and more. 
 
 <h2 id="overview">Overview</h2>
-The sensor is programmed using Arduino (C++) and communicates via a Python program. The sensor consists of off-the-shelf components from Sparkfun, and a spectral sensor from nanoLambda - producing an easy-to-assemble spectral sensing device. The goal of this project is to create an open-source and affordable spectral sensing device in order to make light research more accessible.
+The sensor is programmed using Arduino (C++) and communicates via a Python program. The sensor consists of off-the-shelf components from SparkFun, and a spectral sensor from nanoLambda - producing an easy-to-assemble spectral sensing device. The goal of this project is to create an open-source and affordable spectral sensing device in order to make light research more accessible.
 
 <h2 id="getting-started">Getting Started</h2>
 
@@ -24,7 +23,7 @@ For wiring, and assembly instructions, see the [Build Guide](#build-guide).
 <h3>Installation</h3>
 
 
-- You must first install the firmware onto the device using provided [compiled binaries](https://github.com/C38C/open_spectral_sensing/releases) by following the instrucions below:
+- You must first install the firmware onto the device using provided [compiled binaries](https://github.com/C38C/open_spectral_sensing/releases) by following the instructions below:
     
     - Connect the sensor to a computer via USB
     - With the sensor powered on, double tap the RESET button on the side. (If the sensor is enclosed in the case, you can use an M2 allen-key through the provided hole on the side of the case). This will bring up the "NRF52BOOT" sensor folder.
@@ -84,22 +83,22 @@ At this point, you can disconnect the USB cable if the device is already connect
 
 <h4>Reading Data </h4>
 
-Enter ```3``` to export all data stored on the device onto the conneced computer. Look for a "data" folder in the same directory as ```dock.py```. 
+Enter ```3``` to export all data stored on the device onto the connected computer. Look for a "data" folder in the same directory as ```dock.py```. 
 
-For large files that contain over 500 datapoints, it is recommended to read data directly off the microSD by ejecting it from the sensor. The microSD can be accessed by removing the cap only.
+For large files that contain over 500 data points, it is recommended to read data directly off the microSD by ejecting it from the sensor. The microSD can be accessed by removing the cap only.
 
 <h4>Data Structure</h4>
 
-Data is stored on the sensor in a CSV format. There are 146 columns. Columns 1 - 11 hold information about the spectral measurement, and columns 12 - 146 hold the spectral power distribution at 5 nm intervals from 340 nm to 1010 nm. Each row is a unique captured datapoint.
+Data is stored on the sensor in a CSV format. There are 146 columns. Columns 1 - 11 hold information about the spectral measurement, and columns 12 - 146 hold the spectral power distribution at 5 nm intervals from 340 nm to 1010 nm. Each row is a unique captured data point.
 
 | Column # | Column title | Example data | Range    | Description                                                                                                       |
 |----------|--------------|--------------|----------|-------------------------------------------------------------------------------------------------------------------|
-| 1        | DATE         | 05/10/2022   | -        | The date on which this datapoint was captured. |
-| 2        | TIME         | 12:30:37     | -        | The time on which this datapoint was captured. |
-| 3        | MANUAL       | 1            | 0 or 1   | Was this datapoint captured manually? 1 if yes, 0 if no. |
-| 4        | INT_TIME     | 448          | 1 - 1000 | The integration time used for this datapoint. Exposure time (ms) = (896*[IntegrationTime] + 160) / 500 |
-| 5        | FRAME_AVG    | 3            | 1 - 10   | How many frames where averaged for this datapoint. |
-| 6        | AE           | 1            | 0 or 1   | Was autoexposure enabled? 1 fi yes, 0 if no. |
+| 1        | DATE         | 05/10/2022   | -        | The date on which this data point was captured. |
+| 2        | TIME         | 12:30:37     | -        | The time on which this data point was captured. |
+| 3        | MANUAL       | 1            | 0 or 1   | Was this data point captured manually? 1 if yes, 0 if no. |
+| 4        | INT_TIME     | 448          | 1 - 1000 | The integration time used for this data point. Exposure time (ms) = (896*[IntegrationTime] + 160) / 500 |
+| 5        | FRAME_AVG    | 3            | 1 - 10   | How many frames where averaged for this data point. |
+| 6        | AE           | 1            | 0 or 1   | Was auto-exposure enabled? 1 fi yes, 0 if no. |
 | 7        | IS_SATURATED | 0            | 0 or 1   | Was this recording captured under too bright of a condition? 1 if yes, 0 if no. A saturated recording should not be used. |
 | 8        | IS_DARK      | 0            | 0 or 1   | Was this recording captured under too dark of a condition? 1 if yes, 0 if no. A dark recording should not be used. |
 | 9        | X            | 38.61        | -        | CIE1931 X value. |
@@ -123,17 +122,23 @@ The blue LED behaviour can be classified using the following list:
 
 <h2 id="capturing-data">Capturing Data</h2>
 
-There are three ways to capture data using the sensor.
+There are two ways to capture data using the sensor.
 
-<h3>Automatic</h3>
+<h3>Automatic and Manual Capture</h3>
+
+<h4>Automatic</h4>
 
 Automatic capture is when you plug in the device, and start recording via the ```START_RECORDING``` menu option in ```dock.py```. The recording interval must be set. Recording will last until stopped via the dock program, or if power is lost.
 
-<h3>Manual capture</h3>
+<h4>Manual Capture</h4>
 
-With the device plugged in and connected to the dock program, you can initiate a datapoint capture by selecting ```[2] MANUAL_CAPTURE```. A recording interval does not need to be set for this mode. The device will capture one measurement and save it to device memory.
+With the device plugged in and connected to the dock program, you can initiate a data point capture by selecting ```[2] MANUAL_CAPTURE```. A recording interval does not need to be set for this mode. The device will capture one measurement and save it to device memory.
 
-With this feature, you can also preview a graph of the datapoint once captured. 
+With this feature, you can also preview a graph of the data point once captured. 
+
+<h3>Reading Data</h3>
+
+Data is stored in a CSV file on the microSD card. Data can be read directly from the microSD card, or through the ```EXPORT_ALL``` option via the dock program.
 
 <h2 id="build-guide">Build Guide</h2>
 
@@ -188,11 +193,11 @@ Two wires connect to single common pins on the nRF52840 for GND, 3V3, SCK, DO, a
 
 <h3>3D Printing</h3>
 
-The case consists of three separate parts that come together to enclose the sensor. They are locatetd in the ```3D Models\Case``` directory.
+The case consists of three separate parts that come together to enclose the sensor. They are located in the ```3D Models\Case``` directory.
 
 
 <h4>Material</h4>
-PETG (recommended), PLA, ABS, etc. Recommended material is PETG due to its flexibiliy. PLA and ABS can be used, but repeated strain may cause parts to snap.
+PETG (recommended), PLA, ABS, etc. Recommended material is PETG due to its flexibility. PLA and ABS can be used, but repeated strain may cause parts to snap.
 
 <h4>Layer height</h4>
 0.12 mm or finer.
@@ -202,7 +207,7 @@ Yes, as shown in orange.
 
 <h4>Part orientation</h4>
 
-**If using FDM printer, the part orientation is important for maximum strentgh.**
+**If using FDM printer, the part orientation is important for maximum strength.**
 
 <img src="./Diagrams/print_orientation.png">
 
@@ -228,7 +233,7 @@ Yes, as shown in orange.
 
 <h2 id="calibration">Calibration</h2>
 
-...
+If you are using a non power-calibrated (NPC) sensor from nanoLambda, you must calibrate it against another calibrated sensor and update the calibration factor within your NPC sensor. Use the ```SET_CALIBRATION_FACTOR``` option inside the dock program.
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 
@@ -242,11 +247,6 @@ Yes, as shown in orange.
 1. Connect the sensor to ```dock.py```
 2. Select ```RESET_DEVICE``` by entering ```4```
 
-<h2 id="references">References</h2>
-
-1. nanoLambda
-2. Arduino 
-3. 
 
 <h2 id="credits">Credits</h2>
 
