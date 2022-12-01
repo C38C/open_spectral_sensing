@@ -2,3 +2,5 @@ data
 *.ai
 .vscode/settings.json
 debug
+*.pyc
+Python/data_vis.py

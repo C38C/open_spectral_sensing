@@ -132,9 +132,34 @@ void read_sensor(SpectrumInfo * info, int use_int_time = 0, int use_frame_avg = 
 
 /* Check if datapoint is too dark, okay, or too bright indicated by -1, 0, 1 respectively */
 int validate_reading(SpectrumInfo infoS) {
-  if (infoS.IntegrationTime == 1 || infoS.Y <= MIN_ACCEPTABLE_Y) return -1;
-  if (infoS.IsSaturated == 1) return 1;
-  return 0;
+
+  // count the number of dips to zero. A dark reading will have multiple dips
+  int dip_count = 0;
+  bool is_zero = false;
+  
+  // go through 400 - 700 nm, and count how many times the graph dips to 0
+  for (int i = (400 - MIN_WAVELENGTH) / 5; i < (700 - MIN_WAVELENGTH) / 5; i++) {
+     if (infoS.Spectrum[i] == 0) {
+      if (!is_zero) {
+        dip_count++;
+        is_zero = true;
+      }
+     } else {
+      is_zero = false;
+     }
+  }
+
+  // combine the dip count with autoexposure malfunction with low CIE1931 Y value 
+  if (infoS.IntegrationTime == 1 || infoS.Y <= MIN_ACCEPTABLE_Y || dip_count >= 2) {
+    // too dark
+    return -1;
+  } else if (infoS.IsSaturated == 1) {
+    // too bright
+    return 1;
+  } else {
+    // just right
+    return 0;
+  }
 }
 
 /* Take a manual or automatic measurement, and return the formatted datapoint line */
@@ -192,9 +217,9 @@ String take_measurement(bool manual_measurement = false) {
       mod_int_time += 50;
 
     } else {
-      // no issues, break out of loop
-      break;
+      // no issues, break out of loop 
       s_dark_readings = 0;
+      break;
     }
   }
 
