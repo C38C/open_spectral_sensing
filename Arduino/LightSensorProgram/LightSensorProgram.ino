@@ -168,6 +168,7 @@ String take_measurement(bool manual_measurement = false) {
 
   bool dark_flag = true;
   bool too_dark = false;
+  bool second_attempt = false;
 
   // modified settings to use in this session
   int mod_int_time = int_time;
@@ -177,6 +178,7 @@ String take_measurement(bool manual_measurement = false) {
   while (true) {
 
     read_sensor( & infoS, mod_int_time, mod_frame_avg, mod_ae);
+    
     // validate the datapoint
     int validation_res = validate_reading(infoS);
 
@@ -189,9 +191,21 @@ String take_measurement(bool manual_measurement = false) {
       // too dark
       
       if (ENABLE_NIGHTMODE && s_dark_readings >= MAX_DARK_READINGS) {
-        // too many dark readings in a series, accept this reading as-is
-        too_dark = true;
-        break;
+        // too many dark readings in a series
+        
+        if (!second_attempt) {
+          // this was the first attempt, set int_time to 500, and try again
+          mod_ae = false;
+          second_attempt = true;
+          mod_int_time = STARTING_DARK_INT_TIME;
+          continue;
+          
+        } else {
+          // this was the second attempt, environment still too dark so don't continue
+          too_dark = true;
+          break;
+          
+        }
       }
 
       // too dark even with int_time maxed
@@ -208,13 +222,13 @@ String take_measurement(bool manual_measurement = false) {
       if (mod_frame_avg < 1) mod_frame_avg = 1;
 
       if (dark_flag) {
-        // start with integration time set to 500
+        // this flag is used to set integration time to 500 only once
         dark_flag = false;
         mod_int_time = STARTING_DARK_INT_TIME;
         continue;
       }
 
-      mod_int_time += 50;
+      mod_int_time += 100;
 
     } else {
       // no issues, break out of loop 
@@ -233,7 +247,6 @@ String take_measurement(bool manual_measurement = false) {
   if (!st.write_line( & line)) error_state(1);
 
   data_counter++;
-
   update_memory();
 
   return line;
@@ -279,15 +292,19 @@ String format_line(SpectrumInfo infoS, bool manual_measurement, bool too_dark, i
   line += String(mod_ae);
   line += ",";
 
-  // 7. Was the reading saturated? A reading should not be saturated if ae is used.
-  line += String(infoS.IsSaturated);
+  // 7. What was the light quality? A dark reading will be -1, a good reading is 0, and a saturated reading is 1'
+  if (infoS.IsSaturated) {
+    line += "1";
+  } else if (!infoS.IsSaturated && too_dark) {
+    line += "-1";
+  } else if (!infoS.IsSaturated && !too_dark) {
+    line += "0";
+  } else {
+    line += "-2";
+  }
   line += ",";
 
-  // 8. Was the lighting too dark when this reading took place? This reading should not be used.
-  line += String(too_dark);
-  line += ",";
-
-  // 9. Then put in the CIE1931 values
+  // 8. Then put in the CIE1931 values
   line += String(infoS.X, CIE_PRECISION);
   line += ",";
   line += String(infoS.Y, CIE_PRECISION);
@@ -295,7 +312,7 @@ String format_line(SpectrumInfo infoS, bool manual_measurement, bool too_dark, i
   line += String(infoS.Z, CIE_PRECISION);
   line += ",";
 
-  // 10. Then put in the spectrum data. Sensor reads 340-1010 nm (inclusive) in 5 nm increments
+  // 9. Then put in the spectrum data. Sensor reads 340-1010 nm (inclusive) in 5 nm increments
   for (int i = ((MIN_WAVELENGTH - SENSOR_MIN_WAVELENGTH) / WAVELENGTH_STEPSIZE); i <= ((MAX_WAVELENGTH - SENSOR_MIN_WAVELENGTH) / WAVELENGTH_STEPSIZE); i++) {
     line += String(infoS.Spectrum[i] * calibration_factor, CAPTURE_PRECISION);
     line += ",";

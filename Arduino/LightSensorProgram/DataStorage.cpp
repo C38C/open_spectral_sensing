@@ -29,7 +29,7 @@ bool Storage::open_file() {
   // file opened, check if new file
   if (log_file.size() == 0) {
     // brand new file, add headers
-    String line = "DATE,TIME,MANUAL,INT_TIME,FRAME_AVG,AE,IS_SATURATED,IS_DARK,X,Y,Z,";
+    String line = "DATE,TIME,MANUAL,INT_TIME,FRAME_AVG,AE,QUALITY,X,Y,Z,";
 
     // add the wavelengths to the header
     for (int i = MIN_WAVELENGTH; i <= MAX_WAVELENGTH; i += WAVELENGTH_STEPSIZE) {

@@ -132,7 +132,7 @@ def open_folder(foldername):
 
 # produce the file header
 def file_header():
-    line = "DATE,TIME,MANUAL,INT_TIME,FRAME_AVG,AE,IS_SATURATED,IS_DARK,X,Y,Z,"
+    line = "DATE,TIME,MANUAL,INT_TIME,FRAME_AVG,AE,QUALITY,X,Y,Z,"
     for i in range (MIN_WAVELENGTH, MAX_WAVELENGTH + WAVELENGTH_STEPSIZE, WAVELENGTH_STEPSIZE):
         line += str(i) + ","
     line += "\n"
@@ -217,16 +217,15 @@ def get_formatted_datapoint(line):
     int_time = int(tokens[3])
     frame_avg = int(tokens[4])
     ae = bool(int(tokens[5]))
-    is_saturated = bool(int(tokens[6]))
-    is_dark = bool(int(tokens[7]))
-    cie_x = float(tokens[8])
-    cie_y = float(tokens[9])
-    cie_z = float(tokens[10])
+    quality = int(int(tokens[6]))
+    cie_x = float(tokens[7])
+    cie_y = float(tokens[8])
+    cie_z = float(tokens[9])
     
     x = [i for i in range(MIN_WAVELENGTH, MAX_WAVELENGTH + WAVELENGTH_STEPSIZE, WAVELENGTH_STEPSIZE)]
-    y = [float(i) for i in tokens[11:-1]]
+    y = [float(i) for i in tokens[10:-1]]
 
-    return [x, y, timestamp, manual, int_time, frame_avg, ae, is_saturated, is_dark, cie_x, cie_y, cie_z]
+    return [x, y, timestamp, manual, int_time, frame_avg, ae, quality, cie_x, cie_y, cie_z]
 
 def flush_serial(s):
     while s.in_waiting > 0:
@@ -343,7 +342,8 @@ if __name__ == "__main__":
                     s.close()
                     cls()
                     print("Goodbye!")
-                    exit()                     
+                    exit()
+                                         
                 elif (selected_command == "CONFIGURE_SENSOR"):
 
                     device_name = ""
@@ -575,7 +575,7 @@ if __name__ == "__main__":
                         f.close()
                     
                     if (do_graph):
-                        x, y, timestamp, manual, int_time, frame_avg, ae, is_saturated, is_dark, cie_x, cie_y, cie_z  = get_formatted_datapoint(response[1])
+                        x, y, timestamp, manual, int_time, frame_avg, ae, quality, cie_x, cie_y, cie_z  = get_formatted_datapoint(response[1])
                         plt.plot(x,y)
                         plt.xlim([MIN_WAVELENGTH, MAX_WAVELENGTH])
                         plt.ylabel("Power (W/m^2)")

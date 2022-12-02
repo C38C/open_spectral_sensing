@@ -22,7 +22,7 @@
 #define DEF_CALIBRATION_FACTOR 1 // the calibration factor for the particular sensor
 #define MIN_ACCEPTABLE_Y 5 // the minimum acceptable Y value for reading (CIE1931)
 #define STARTING_DARK_INT_TIME 500 // the starting integration time for correcting dark readings
-#define MAX_INT_TIME 1000 // the maximm integration time to use
+#define MAX_INT_TIME 1200 // the maximm integration time to use
 // NIGHT MODE
 #define ENABLE_NIGHTMODE true // night mode attempts to save battery by reducing readings when dark
 #define MAX_DARK_READINGS 3 // how many sequential dark readings before nightmode engages?
