@@ -2,7 +2,7 @@
 #define CONSTANTS_H
 
 // STORAGE
-#define LOG_FILENAME "LOG1" // the log filename to write to
+#define LOG_FILENAME "LOG2" // the log filename to write to
 #define METADATA_FILENAME "METADATA" // the metadata file name
 #define FILE_EXT ".CSV" // the log file extension
 #define MAX_LINE_LENGTH 3000 // the maximum line length in file
