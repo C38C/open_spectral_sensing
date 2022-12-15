@@ -99,12 +99,11 @@ Data is stored on the sensor in a CSV format. There are 146 columns. Columns 1 -
 | 4        | INT_TIME     | 448          | 1 - 1000 | The integration time used for this data point. Exposure time (ms) = (896*[IntegrationTime] + 160) / 500 |
 | 5        | FRAME_AVG    | 3            | 1 - 10   | How many frames where averaged for this data point. |
 | 6        | AE           | 1            | 0 or 1   | Was auto-exposure enabled? 1 fi yes, 0 if no. |
-| 7        | IS_SATURATED | 0            | 0 or 1   | Was this recording captured under too bright of a condition? 1 if yes, 0 if no. A saturated recording should not be used. |
-| 8        | IS_DARK      | 0            | 0 or 1   | Was this recording captured under too dark of a condition? 1 if yes, 0 if no. A dark recording should not be used. |
-| 9        | X            | 38.61        | -        | CIE1931 X value. |
-| 10       | Y            | 37.52        | -        | CIE1931 Y value. |
-| 11       | Z            | 21.73        | -        | CIE1931 Z value. |
-| 12 - 146       | 340 - 1010            |  -       | -        | spectral power in W/m<sup>2</sup>. |
+| 7        | QUALITY      | 0            | -1 to 1   | Indicates whether data point was captured under poor lighting conditions. -1 means too dark, 0 is normal, 1 is too bright. Data points that are not 0 should be discarded. |
+| 8        | X            | 38.61        | -        | CIE1931 X value. |
+| 9       | Y            | 37.52        | -        | CIE1931 Y value. |
+| 10       | Z            | 21.73        | -        | CIE1931 Z value. |
+| 11 - 145       | 340 - 1010            |  -       | -        | spectral power in W/m<sup>2</sup>. |
 
 <h4>Charging</h4>
 

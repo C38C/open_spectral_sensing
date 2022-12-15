@@ -127,8 +127,6 @@ def open_folder(foldername):
             os.makedirs(new_foldername)
             break
     return new_foldername
-        
-    
 
 # produce the file header
 def file_header():
@@ -136,16 +134,7 @@ def file_header():
     for i in range (MIN_WAVELENGTH, MAX_WAVELENGTH + WAVELENGTH_STEPSIZE, WAVELENGTH_STEPSIZE):
         line += str(i) + ","
     line += "\n"
-    return line
-
-# Pings all serial devices connected, saves responses of valid OSS devices. If response was valid, table contains name, else None
-def say_hello(port, response, ind):
-    try:
-        with serial.Serial(port=port, baudrate=BAUDRATE, timeout=SER_TIMEOUT) as _s:
-            device = update_device_status(_s)
-            response[ind] = device
-    except Exception as e:
-        pass      
+    return line    
     
 def update_device_status(s):
     try:
@@ -173,6 +162,15 @@ def update_device_status(s):
     
     except Exception as e:
         return None
+    
+# Pings all serial devices connected, saves responses of valid OSS devices. If response was valid, table contains name, else None
+def say_hello(port, response, ind):
+    try:
+        with serial.Serial(port=port, baudrate=BAUDRATE, timeout=SER_TIMEOUT) as _s:
+            device = update_device_status(_s)
+            response[ind] = device
+    except Exception as e:
+        pass  
            
 def find_devices():
     # list of serial ports connected to the computer
