@@ -72,8 +72,6 @@ bool Storage::file_available() {
   return log_file.available();
 }
 
-
-
 void Storage::seek_to(unsigned long b) {
   log_file.seek(b);
 }
