@@ -168,7 +168,7 @@ Hardware (optional)
 
 <h3>Soldering</h3>
 
-To allow for a small device footprint, flexible 30 AWG silicone wire is used. Approximately x cm of wire is used for the configuration outlined in [Layout](#layout)
+To allow for a small device footprint, flexible 30 AWG silicone wire is used. Approximately 60 cm of wire is used for the configuration outlined in [Layout](#layout)
 
 Soldering happens from both the top and bottom of the nRF52840. "Helping hands" are highly recommended, as well as a fine-tip soldering iron.
 
