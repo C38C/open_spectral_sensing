@@ -246,7 +246,7 @@ if __name__ == "__main__":
             # first loop, if only one device, automatically connect
             if (len(devices) == 1):
                 inp = 0
-            else:
+            elif (len(devices) > 1):
                 print("Detected devices:")
                 
                 for i, device in enumerate(devices):
@@ -258,6 +258,10 @@ if __name__ == "__main__":
                     continue
                 
                 inp = int(inp)
+            else:
+                print("No devices detected... Trying again")
+                time.sleep(1)
+                continue
             
             # S is the selected OSS device
             d = devices[inp]

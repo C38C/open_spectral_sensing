@@ -1,6 +1,6 @@
 /**
  * Sadi Wali August 2022
- * Last modified: September 07 2022
+ * Last modified: December 16 2023
  * 
  * This open-source program is written for the Nordic nRF52840, and the NanoLambda NSP32m W1
  * to create a lightweight wearable spectral sensor that record data at a set interval on battery.
@@ -61,32 +61,32 @@
 using namespace NanoLambdaNSP32;
 using namespace Adafruit_LittleFS_Namespace;
 
-const unsigned int PinRst = NSP_RESET; // pin Reset
-const unsigned int PinSS = NSP_CS_PIN; // NSP chip select pin
-const unsigned int PinReady = NSP_READY; // pin Ready
+const unsigned int PinRst = NSP_RESET;              // pin Reset
+const unsigned int PinSS = NSP_CS_PIN;              // NSP chip select pin
+const unsigned int PinReady = NSP_READY;            // pin Ready
 
 // VARIABLES
-int logging_interval = DEF_CAPTURE_INTERVAL; // the data logging interval
-unsigned long last_collection_time = 0; // remember the last collection interval
-unsigned long time_offset = 0; // how much time to offset by if device hung for long operations
-bool recording = false; // is data capture recording?
-String device_name = DEV_NAME_PREFIX; // the device name for easier identification
+int logging_interval = DEF_CAPTURE_INTERVAL;        // the data logging interval
+unsigned long last_collection_time = 0;             // remember the last collection interval
+unsigned long time_offset = 0;                      // how much time to offset by if device hung for long operations
+bool recording = false;                             // is data capture recording?
+String device_name = DEV_NAME_PREFIX;               // the device name for easier identification
 double calibration_factor = DEF_CALIBRATION_FACTOR; // the calibration factor
-int int_time = 500; // default integration time for sensor           
-int frame_avg = DEF_FRAME_AVG; // how many frames to average
-bool ae = true; // use autoexposure?
-unsigned int data_counter = 0; // how many data points collected and stored
-int s_dark_readings = 0; // how many sequential dark readings?
-unsigned long paused_time = 0; // when was the sensor paused
-unsigned long pause_duration = 0; // how long was the sensor paused for?
+int int_time = 500;                                 // default integration time for sensor           
+int frame_avg = DEF_FRAME_AVG;                      // how many frames to average
+bool ae = true;                                     // use autoexposure?
+unsigned int data_counter = 0;                      // how many data points collected and stored
+int s_dark_readings = 0;                            // how many sequential dark readings?
+unsigned long paused_time = 0;                      // when was the sensor paused
+unsigned long pause_duration = 0;                   // how long was the sensor paused for?
 
-char ser_buffer[32]; // the serial buffer
-int read_index = 0; // the serial buffer read index
+char ser_buffer[32];                                // the serial buffer
+int read_index = 0;                                 // the serial buffer read index
 
 // OBJECTS
-ArduinoAdaptor adaptor(PinRst, PinSS); // master MCU adaptor
-NSP32 nsp32( & adaptor, NSP32::ChannelSpi); // NSP32 (using SPI channel)
-Storage st(SD_CS_PIN, LOG_FILENAME); // the data storage object
+ArduinoAdaptor adaptor(PinRst, PinSS);              // master MCU adaptor
+NSP32 nsp32( & adaptor, NSP32::ChannelSpi);         // NSP32 (using SPI channel)
+Storage st(SD_CS_PIN, LOG_FILENAME);                // the data storage object
 Adafruit_LittleFS_Namespace::File file(InternalFS); // the metadata file stored in persistent flash
 
 
@@ -99,7 +99,6 @@ void setup() {
     PinReadyTriggerISR, FALLING); // enable interrupt for NSP READY
   // initialize serial port
   Serial.begin(BAUDRATE);
-
 
   // initialize the persistent storage
   InternalFS.begin();
@@ -114,7 +113,11 @@ void setup() {
   nsp32.Init();
   nsp32.Standby(0);
 
-  pause(true);
+  // if device is already recording on startup, that means power was lost
+  if (recording) {
+    String error_line = "POWER LOSS DETECTED";
+    st.write_line(& error_line);
+  }
   
 }
 
@@ -243,8 +246,23 @@ String take_measurement(bool manual_measurement = false) {
   // Standby seems to clear SpectrumInfo, therefore call it after processing the data
   nsp32.Standby(0);
 
-  // write the data to the SD card
-  if (!st.write_line( & line)) error_state(1);
+  // write the data to the SD card, if there is an error, try to restart SD
+  while (!st.write_line( & line)) {
+    digitalWrite(7, HIGH);
+    // wait 1 second, and try initialize SD again
+    delay(1000);
+
+    if (st.init()) {
+      // write the line
+      st.write_line(& line);
+      // write that there was an error
+      String error_line = "DATA LOGGING ERROR";
+      st.write_line(& error_line);
+      digitalWrite(7, LOW);
+      // break out of the loop
+      break;
+    }
+  }
 
   data_counter++;
   update_memory();
@@ -327,7 +345,7 @@ void update_memory() {
   String filename = "/" + String(METADATA_FILENAME) + String(FILE_EXT);
   InternalFS.remove(filename.c_str());
   if (file.open(filename.c_str(), FILE_O_WRITE)) {
-    String writeline = device_name + "," + String(logging_interval) + "," + String(data_counter) + "," + String(calibration_factor);
+    String writeline = device_name + "," + String(logging_interval) + "," + String(data_counter) + "," + String(calibration_factor) + "," + String(recording);
     file.write(writeline.c_str(), strlen(writeline.c_str()));
     file.close();
 
@@ -351,7 +369,7 @@ void read_memory() {
     sbuffer[readlen] = '\0';
     String readline = String(sbuffer);
 
-    int delimiters[3];
+    int delimiters[4];
     int d_count = 0;
 
     for (int i = 0; i < readlen; i++) {
@@ -362,7 +380,7 @@ void read_memory() {
       }
     }
 
-    if (d_count != 3) {
+    if (d_count != 4) {
       // the memory file is not as expected, re-create it
       file.close();
       update_memory();
@@ -372,7 +390,8 @@ void read_memory() {
     device_name = readline.substring(0, delimiters[0]);
     logging_interval = readline.substring(delimiters[0] + 1, delimiters[1]).toInt();
     data_counter = readline.substring(delimiters[1] + 1, delimiters[2]).toInt();
-    calibration_factor = readline.substring(delimiters[2] + 1).toFloat();
+    calibration_factor = readline.substring(delimiters[2] + 1, delimiters[3]).toFloat();
+    recording = readline.substring(delimiters[3] + 1) == "1";
 
     file.close();
   } else {
@@ -384,6 +403,7 @@ void read_memory() {
 /* Infinite loop LED to indicate an error. */
 void error_state(int code) {
   while (true) {
+    Serial.println("Error " + String(code));
     for (int i = 0; i < code; i++) {
       digitalWrite(7, HIGH);
       delay(250);
@@ -457,13 +477,15 @@ void loop() {
     if (end_of_line) {
 
       if (ser_buffer[0] == '0' && ser_buffer[1] == '0') {
-        // 00: Toggle data capture while plugged in (DEPRECIATED)
-        // TODO implement
+        // 00: Toggle data capture while plugged in
+
         if (recording) {
           pause(true);
         } else {
           pause(false);
         }
+
+        update_memory();
         Serial.println("DATA");
         Serial.println(recording);
         Serial.println("OK");
@@ -511,6 +533,7 @@ void loop() {
         logging_interval = DEF_CAPTURE_INTERVAL;
         data_counter = 0;
         calibration_factor = DEF_CALIBRATION_FACTOR;
+        recording = false;
 
         update_memory();
 
@@ -589,7 +612,7 @@ void loop() {
         Serial.println("OK");
         
       } else if (ser_buffer[0] == '1' && ser_buffer[1] == '2') {
-        // 12: Start recording
+      // 12: Start recording
         pause(false);
         Serial.println("OK");
         

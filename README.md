@@ -246,6 +246,10 @@ If you are using a non power-calibrated (NPC) sensor from nanoLambda, you must c
 1. Connect the sensor to ```dock.py```
 2. Select ```RESET_DEVICE``` by entering ```4```
 
+<h2 id="resources">Resources</h2>
+<ul>
+<li>Microsoft UF2: <a href="https://github.com/microsoft/uf2">https://github.com/microsoft/uf2</a></li>
+</ul>
 
 <h2 id="credits">Credits</h2>
 
